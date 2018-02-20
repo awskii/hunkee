@@ -19,6 +19,54 @@ var (
 	ErrNotSupportedType = errors.New("corresponded kind is not supported")
 )
 
+// processField gets token and parse it into corresponded type and puts into 'final' value
+func (m *mapper) processField(field *field, final reflect.Value, token string) error {
+	v := final.FieldByIndex(field.index)
+	if v.Kind() == reflect.Ptr && v.IsNil() {
+		// Allocate memory
+		v.Set(reflect.New(deref(v.Type())))
+	}
+	switch field.typ.Kind() {
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		i64, err := processInt(field.typ.Kind(), token)
+		if err != nil {
+			return err
+		}
+		v.SetInt(i64)
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+		ui64, err := processUint(field.typ.Kind(), token)
+		if err != nil {
+			return err
+		}
+		v.SetUint(ui64)
+	case reflect.String:
+		v.SetString(token)
+	case reflect.Float32, reflect.Float64:
+		fl64, err := processFloat(field.typ.Kind(), token)
+		if err != nil {
+			return err
+		}
+		v.SetFloat(fl64)
+	case reflect.Struct:
+		processStringToStruct(v, token, field)
+	case reflect.Interface:
+		// work only with net.Addr
+		if v.Type() != reflect.TypeOf((*net.Addr)(nil)) {
+			return ErrNotSupportedType
+		}
+	}
+
+	// set raw value
+	if field.hasRaw {
+		if raw := m.raw(field); raw == nil {
+			panic(fmt.Sprintf("%s field should have raw field, but there are no such field", field.name))
+		} else {
+			final.Field(raw.index[0]).Set(reflect.ValueOf(token))
+		}
+	}
+	return nil
+}
+
 func processUint(kind reflect.Kind, token string) (uint64, error) {
 	var size int
 	switch kind {
@@ -124,54 +172,6 @@ func procTag(tagLine reflect.StructTag) (tag, normalName string, err error) {
 	}
 
 	return
-}
-
-// processField gets token and parse it into corresponded type and puts into 'final' value
-func processField(fields *Mapper, field *field, final reflect.Value, token string) error {
-	v := final.Field(field.index[0])
-	if v.Kind() == reflect.Ptr && v.IsNil() {
-		// Allocate memory
-		v.Set(reflect.New(deref(v.Type())))
-	}
-	switch field.typ.Kind() {
-	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-		i64, err := processInt(field.typ.Kind(), token)
-		if err != nil {
-			return err
-		}
-		v.SetInt(i64)
-	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
-		ui64, err := processUint(field.typ.Kind(), token)
-		if err != nil {
-			return err
-		}
-		v.SetUint(ui64)
-	case reflect.String:
-		v.SetString(token)
-	case reflect.Float32, reflect.Float64:
-		fl64, err := processFloat(field.typ.Kind(), token)
-		if err != nil {
-			return err
-		}
-		v.SetFloat(fl64)
-	case reflect.Struct:
-		processStringToStruct(v, token)
-	case reflect.Interface:
-		// work only with net.Addr
-		if v.Type() != reflect.TypeOf((*net.Addr)(nil)) {
-			return ErrNotSupportedType
-		}
-	}
-
-	// set raw value
-	if field.hasRaw {
-		if raw := fields.Raw(field); raw == nil {
-			panic(fmt.Sprintf("%s field should have raw field, but there are no such field", field.name))
-		} else {
-			final.Field(raw.index[0]).Set(reflect.ValueOf(token))
-		}
-	}
-	return nil
 }
 
 func appendReflectSlice(args []interface{}, v reflect.Value, vlen int) []interface{} {
