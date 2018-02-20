@@ -29,15 +29,15 @@ func splitTokens(mp *Mapper, line string, timeFormat string) []string {
 	var (
 		end    int
 		offset int
-
-		tokens = make([]string, len(mp.tokensSeq))
+		w      = p.mapper.aquireWorker()
 	)
 
 	if debug {
 		log.Printf("Entry: %q Len: %d\n", line, len(line))
 	}
 
-	for field, i := mp.First(), 0; field != nil; field = mp.Next() {
+	for field := w.first(); field != nil; field = w.next() {
+		var token string
 		// mapper guarantee that all names has fields
 		if field.typ == typeTime {
 			// if it's time make offset from offset to the end of value
@@ -63,8 +63,8 @@ func splitTokens(mp *Mapper, line string, timeFormat string) []string {
 		offset = end + field.after
 		i++
 	}
-
-	return tokens
+	w.release()
+	return
 }
 
 func findNextSpace(line string, start int) int {
