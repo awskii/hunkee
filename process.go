@@ -96,6 +96,9 @@ func processStringToStruct(v reflect.Value, token string) (err error) {
 			return err
 		}
 		v.Set(reflect.ValueOf(u))
+	case typeIP:
+		ip := net.ParseIP(token)
+		v.Set(reflect.ValueOf(ip))
 	default:
 		return ErrNotSupportedType
 	}
