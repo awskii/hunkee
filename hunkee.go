@@ -2,16 +2,10 @@ package hunkee
 
 import (
 	"errors"
-	"reflect"
 	"time"
 )
 
 var (
-	debug bool
-
-	_location   *time.Location
-	_timeLayout = time.RFC822 // default time layout 02 Jan 06 15:04 MST
-
 	ErrSyntax           = errors.New("syntax error")
 	ErrOnlyStructs      = errors.New("only struct types supported")
 	ErrNotSpecified     = errors.New("tag not specified")
@@ -19,45 +13,76 @@ var (
 	ErrUnexpectedColon  = errors.New("unexpected ':' while parsing format string")
 )
 
+type Parser struct {
+	mapper *mapper
+	debug  bool
+}
+
+func NewParser(format string, to interface{}, workers int) (*Parser, error) {
+	mapper, err := initMapper(format, to)
+	if err != nil {
+		return nil, err
+	}
+	mapper.initWorkers(workers)
+
+	return &Parser{
+		mapper: mapper,
+	}, nil
+}
+
+type TimeOption struct {
+	Layout   string
+	Location *time.Location
+}
+
 // SetDebug makes hunkee more verbose
-func SetDebug(val bool) {
-	debug = val
+func (p *Parser) SetDebug(val bool) {
+	p.debug = val
 }
 
 // SetTimeLayout setups provided time layout for time.Time
 // fields in log entry. By default it's corresponded to
 // RFC822 (02 Jan 06 15:04 MST)
-func SetTimeLayout(timeLayout string) {
-	_timeLayout = timeLayout
+func (p *Parser) SetTimeLayout(tag, timeLayout string) {
+	p.mapper.fields[tag].timeOptions.Layout = timeLayout
+}
+
+func (p *Parser) SetMultiplyTimeLayout(tagToLayouts map[string]string) {
+	for tag, layout := range tagToLayouts {
+		p.SetTimeLayout(tag, layout)
+	}
 }
 
 // SetTimeLocation used to parse time in provided location.
-func SetTimeLocation(loc *time.Location) {
+func (p *Parser) SetTimeLocation(tag string, loc *time.Location) {
 	if loc == nil {
 		panic("passed nil location")
 	}
-	_location = loc
+	p.mapper.fields[tag].timeOptions.Location = loc
 }
 
-func Parse(format, line string, to interface{}) error {
-	fields, err := NewMapper(format, to)
-	if err != nil {
-		return err
+func (p *Parser) SetTimeOption(tag string, to *TimeOption) {
+	if to == nil {
+		return
 	}
-	return parse(fields, _timeLayout, line, to)
+	p.mapper.fields[tag].timeOptions = to
 }
 
-func parse(fields *Mapper, timeFormat string, line string, to interface{}) error {
-	// Get desitnation pointer
-	destination := reflect.Indirect(reflect.ValueOf(to))
-	// Split line on tokens
-	tokens := splitTokens(fields, line, timeFormat)
-
-	for field, i := fields.First(), 0; field != nil; field = fields.Next() {
-		if err := processField(fields, field, destination, tokens[i]); err != nil {
-			return err
-		}
-		i++
+// TimeOption returns corresponded TimeOptions for tag
+func (p *Parser) TimeOption(tag string) *TimeOption {
+	if to := p.mapper.fields[tag].timeOptions; to != nil {
+		return to
 	}
 	return nil
+}
+
+func (p *Parser) ParseLine(line string, to interface{}) error {
+	return p.parseLine(line, to)
+}
+
+func DefaultTimeOptions() *TimeOption {
+	return &TimeOption{
+		Location: nil,
+		Layout:   time.RFC822, // default time layout 02 Jan 06 15:04 MST
+	}
 }
