@@ -119,14 +119,18 @@ func processFloat(kind reflect.Kind, token string) (float64, error) {
 
 // processStringToStruct gets token and parses it into
 // net.Addr, time.Time, time.Duration, url.URL
-func processStringToStruct(v reflect.Value, token string) (err error) {
+func processStringToStruct(v reflect.Value, token string, field *field) (err error) {
 	switch v.Type() {
 	case typeTime:
 		var t time.Time
-		if _location == nil {
-			t, err = time.Parse(_timeLayout, token)
+		if field.timeOptions == nil {
+			panic("nil time options")
+		}
+
+		if field.timeOptions.Location == nil {
+			t, err = time.Parse(field.timeOptions.Layout, token)
 		} else {
-			t, err = time.ParseInLocation(_timeLayout, token, _location)
+			t, err = time.ParseInLocation(field.timeOptions.Layout, token, field.timeOptions.Location)
 		}
 		if err != nil {
 			return err
@@ -153,8 +157,8 @@ func processStringToStruct(v reflect.Value, token string) (err error) {
 	return nil
 }
 
-// procTag returns full tag, normalName aka not raw name and error, if exists
-func procTag(tagLine reflect.StructTag) (tag, normalName string, err error) {
+// processTag returns full tag, normalName aka not raw name and error, if exists
+func processTag(tagLine reflect.StructTag) (tag, normalName string, err error) {
 	var ok bool
 	tag, ok = tagLine.Lookup(libtag)
 	if !ok || tag == "" || tag == unexportedTag {
