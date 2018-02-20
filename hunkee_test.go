@@ -17,18 +17,26 @@ type Beach struct {
 }
 
 var (
+	parser     *Parser
+	bch        = new(Beach)
 	timeLayout = time.RFC822
 	format     = ":time :id :name :lo_ac :temp"
 	entry      = "02 Jan 06 15:04 MST 17522 Brighton 20 25.6"
 )
 
+func init() {
+	var err error
+	parser, err = NewParser(format, bch, 10)
+	if err != nil {
+		panic(err)
+	}
+
+	//parser.SetDebug(true)
+}
+
 func BenchmarkParse(b *testing.B) {
-	SetTimeLayout(time.RFC822)
-	SetDebug(true)
-	bch := new(Beach)
-	mp, _ := NewMapper(format, bch)
 	for i := 0; i < b.N; i++ {
-		if err := parse(mp, timeLayout, entry, bch); err != nil {
+		if err := parser.ParseLine(entry, bch); err != nil {
 			fmt.Println(err)
 		}
 	}

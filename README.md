@@ -26,27 +26,35 @@ type Beach struct {
 }
 
 var (
-	timeLayout = time.RFC822
-	format     = ":time :id :name :lo_ac :temp"
-	entry      = "02 Jan 06 15:04 MST 17522 Brighton 20 25.6"
+	format = ":time :id :name :lo_ac :temp"
+	entry  = "02 Jan 06 15:04 MST 17522 Brighton 20 25.6"
 )
 
 func main() {
-	b := new(Beach)
-	hunkee.SetTimeLayout(time.RFC822)
-	if err := hunkee.Parse(format, entry, b); err != nil {
-		fmt.Println(err)
+	var err error
+	bch := new(Beach)
+
+	workersAmount := 10
+	parser, err := hunkee.NewParser(format, bch, workersAmount)
+	if err != nil {
+		panic(err)
 	}
 
-	fmt.Printf("%+v\n", b)
+	iters := 100000000
+	for i := 0; i < iters; i++ {
+		if i%10000 == 0 {
+			fmt.Printf("\r Progress: %d/%d", i, iters)
+		}
+		if err := parser.ParseLine(entry, bch); err != nil {
+			fmt.Println(err)
+		}
+	}
 }
 
 ```
 
 ## Benchmarks
 ```
-BenchmarkParse-4       	 1000000	      1151 ns/op	     112 B/op	       2 allocs/op
-BenchmarkParse-16      	 1000000	      1129 ns/op	     112 B/op	       2 allocs/op
-BenchmarkParseRE-4     	 1000000	      2367 ns/op	     448 B/op	       6 allocs/op
-BenchmarkParseRE-16    	 1000000	      2364 ns/op	     448 B/op	       6 allocs/op
+BenchmarkParse-4     	 2000000	       953 ns/op	      32 B/op	       1 allocs/op
+BenchmarkParseRE-4   	  500000	      2482 ns/op	     448 B/op	       6 allocs/op
 ```
