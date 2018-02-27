@@ -90,6 +90,11 @@ func (m *mapper) writeField(tag string, f *field) {
 	m.fields[tag] = f
 	m.mu.Unlock()
 }
+
+func (m *mapper) aquireWorker() *worker {
+	return &worker{parent: m}
+}
+
 // TODO how to work with slices?
 func extractFieldsOnTags(arg interface{}) (map[string]*field, error) {
 	v := reflect.ValueOf(arg)
