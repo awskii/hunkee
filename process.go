@@ -177,24 +177,3 @@ func processTag(tagLine reflect.StructTag) (tag, normalName string, err error) {
 
 	return
 }
-
-func appendReflectSlice(args []interface{}, v reflect.Value, vlen int) []interface{} {
-	switch val := v.Interface().(type) {
-	case []interface{}:
-		args = append(args, val...)
-	case []int:
-		for i := range val {
-			args = append(args, val[i])
-		}
-	case []string:
-		for i := range val {
-			args = append(args, val[i])
-		}
-	default:
-		for si := 0; si < vlen; si++ {
-			args = append(args, v.Index(si).Interface())
-		}
-	}
-
-	return args
-}

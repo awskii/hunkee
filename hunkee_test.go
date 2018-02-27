@@ -30,8 +30,6 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
-
-	//parser.SetDebug(true)
 }
 
 func BenchmarkParse(b *testing.B) {
