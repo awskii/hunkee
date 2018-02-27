@@ -82,7 +82,6 @@ func (p *Parser) ParseLine(line string, to interface{}) error {
 
 func DefaultTimeOptions() *TimeOption {
 	return &TimeOption{
-		Location: nil,
-		Layout:   time.RFC822, // default time layout 02 Jan 06 15:04 MST
+		Layout: time.RFC822, // default time layout 02 Jan 06 15:04 MST
 	}
 }
