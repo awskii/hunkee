@@ -59,6 +59,8 @@ func (p *Parser) SetTimeLocation(tag string, loc *time.Location) {
 	p.mapper.fields[tag].timeOptions.Location = loc
 }
 
+// SetTimeOption sets provided timeOption to provided tag.
+// Make sure you do it once at start, no andy dynamic behavior
 func (p *Parser) SetTimeOption(tag string, to *TimeOption) {
 	if to == nil {
 		return
@@ -74,6 +76,7 @@ func (p *Parser) TimeOption(tag string) *TimeOption {
 	return nil
 }
 
+// ParseLine gets line of input and structure to parse in
 func (p *Parser) ParseLine(line string, to interface{}) error {
 	return p.parseLine(line, to)
 }
