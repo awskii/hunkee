@@ -11,7 +11,7 @@ import (
 // mapper knows which field associated with tag,
 // current position and token sequence
 type mapper struct {
-	// no muteses because we write to fields and tokenSeq
+	// no mutexes because we write to fields and tokenSeq
 	// only once when building up structure
 	fields    map[string]*field
 	tokensSeq []string
