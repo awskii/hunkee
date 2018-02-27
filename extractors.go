@@ -57,7 +57,7 @@ func (p *Parser) parseLine(line string, dest interface{}) (err error) {
 		}
 
 		if debug {
-			log.Printf("Token: %q [%d:%d] After: %d\n", line[offset:end], offset, end, field.after)
+			log.Printf("Token: %q [%d:%d] After: %d\n", token, offset, end, field.after)
 		}
 
 		destination := reflect.Indirect(reflect.ValueOf(dest))
