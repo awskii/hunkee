@@ -37,8 +37,6 @@ type namedParameter struct {
 	offset int    // count of symols after entry to next entry
 }
 
-var debug bool
-
 func initMapper(format string, to interface{}) (*mapper, error) {
 	// get info about entry
 	tokens, err := extractNames(format)

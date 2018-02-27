@@ -21,6 +21,8 @@ var (
 	typeIP       = reflect.TypeOf(net.IP{})
 )
 
+var debug bool
+
 // parseLine processing one log line into structure
 func (p *Parser) parseLine(line string, dest interface{}) (err error) {
 	var (
