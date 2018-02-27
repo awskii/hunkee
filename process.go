@@ -97,7 +97,7 @@ func processInt(kind reflect.Kind, token string) (int64, error) {
 	case reflect.Int64:
 		size = 64
 	default:
-		return 0, ErrNotUint
+		return 0, ErrNotInt
 	}
 
 	return strconv.ParseInt(token, 10, size)
@@ -111,7 +111,7 @@ func processFloat(kind reflect.Kind, token string) (float64, error) {
 	case reflect.Float64:
 		size = 64
 	default:
-		return 0, ErrNotUint
+		return 0, ErrNotFloat
 	}
 
 	return strconv.ParseFloat(token, size)
