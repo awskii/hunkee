@@ -26,7 +26,7 @@ var (
 
 func init() {
 	var err error
-	parser, err = NewParser(format, bch, 10)
+	parser, err = NewParser(format, bch)
 	if err != nil {
 		panic(err)
 	}
