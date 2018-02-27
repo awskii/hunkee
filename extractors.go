@@ -78,7 +78,7 @@ func findNextSpace(line string, start int) int {
 	}
 
 	for i := start + 1; i < len(line); i++ {
-		if line[i] == ' ' {
+		if line[i] == ' ' || line[i] == '\n' {
 			return i
 		}
 	}
