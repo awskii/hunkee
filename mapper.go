@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"reflect"
+	"sync"
 	"unicode"
 )
 
@@ -13,6 +14,7 @@ import (
 type mapper struct {
 	// no mutexes because we write to fields and tokenSeq
 	// only once when building up structure
+	mu        sync.RWMutex
 	fields    map[string]*field
 	tokensSeq []string
 	workers   []*worker
@@ -78,6 +80,18 @@ func (m *mapper) raw(normal *field) *field {
 	return f
 }
 
+// assume no any data writes here
+func (m *mapper) getField(tag string) *field {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	return m.fields[tag]
+}
+
+func (m *mapper) writeField(tag string, f *field) {
+	m.mu.Lock()
+	m.fields[tag] = f
+	m.mu.Unlock()
+}
 // TODO how to work with slices?
 func extractFieldsOnTags(arg interface{}) (map[string]*field, error) {
 	v := reflect.ValueOf(arg)
