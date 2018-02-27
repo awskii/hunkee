@@ -68,7 +68,6 @@ func (p *Parser) parseLine(line string, dest interface{}) (err error) {
 		// update current offset
 		offset = end + field.after
 	}
-	w.release()
 	return
 }
 

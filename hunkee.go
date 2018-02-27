@@ -18,13 +18,11 @@ type Parser struct {
 	debug  bool
 }
 
-func NewParser(format string, to interface{}, workers int) (*Parser, error) {
+func NewParser(format string, to interface{}) (*Parser, error) {
 	mapper, err := initMapper(format, to)
 	if err != nil {
 		return nil, err
 	}
-	mapper.initWorkers(workers)
-
 	return &Parser{
 		mapper: mapper,
 	}, nil

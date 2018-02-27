@@ -1,50 +1,29 @@
 package hunkee
 
+import "sync/atomic"
+
 // worker need to safely use any amount of parsers for
 // corresponded format without any memory overhead and races.
 type worker struct {
 	id     uint
-	busy   bool
+	pos    uint32
 	parent *mapper
-	pos    int
 }
 
-func (m *mapper) initWorkers(amount int) {
-	m.workers = make([]*worker, amount)
-	for i := 0; i < amount; i++ {
-		m.workers[i] = &worker{parent: m}
-	}
-}
-
-func (m *mapper) aquireWorker() *worker {
-	for i := 0; i < len(m.workers); i++ {
-		if !m.workers[i].busy {
-			m.workers[i].busy = true
-			return m.workers[i]
-		}
-	}
-	// TODO implement worker queue
-	return nil
-}
-
-func (w *worker) seek(i int) *field {
-	if i >= len(w.parent.tokensSeq) {
+func (w *worker) seek(i uint32) *field {
+	if i >= uint32(len(w.parent.tokensSeq)) {
 		return nil
 	}
 
-	f := w.parent.fields[w.parent.tokensSeq[i]]
-	w.pos = i + 1
+	f := w.parent.getField(w.parent.tokensSeq[i])
+	atomic.StoreUint32(&w.pos, uint32(i+1))
 	return f
 }
 
 func (w *worker) next() *field {
-	return w.seek(w.pos)
+	return w.seek(atomic.LoadUint32(&w.pos))
 }
 
 func (w *worker) first() *field {
 	return w.seek(0)
-}
-
-func (w *worker) release() {
-	w.busy = false
 }
