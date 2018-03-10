@@ -205,7 +205,7 @@ func extractNames(format string) ([]*namedParameter, error) {
 			}
 
 			// last symbol
-			if i == length-1 {
+			if i == len(s)-1 {
 				if s[i] != '\n' {
 					name += string(s[i])
 				}
