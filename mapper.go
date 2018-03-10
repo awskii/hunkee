@@ -14,10 +14,11 @@ import (
 type mapper struct {
 	// no mutexes because we write to fields and tokenSeq
 	// only once when building up structure
-	mu        sync.RWMutex
-	fields    map[string]*field
-	tokensSeq []string
-	workers   []*worker
+	mu           sync.RWMutex
+	fields       map[string]*field
+	tokensSeq    []string
+	comPrefix    string // skip line if line has such prefix
+	prefixActive bool   // if false, prefix check will be disabled
 }
 
 // field represents structure field

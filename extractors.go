@@ -5,6 +5,7 @@ import (
 	"net"
 	"net/url"
 	"reflect"
+	"strings"
 	"time"
 )
 
@@ -33,6 +34,13 @@ func (p *Parser) parseLine(line string, dest interface{}) (err error) {
 
 	if debug {
 		log.Printf("Entry: %q Len: %d\n", line, len(line))
+	}
+
+	if p.mapper.prefixActive && strings.HasPrefix(line, p.mapper.comPrefix) {
+		if debug {
+			log.Printf("Entry: %q skipped due to has prefix %q\n", line, p.mapper.comPrefix)
+		}
+		return
 	}
 
 	for field := w.first(); field != nil; field = w.next() {
