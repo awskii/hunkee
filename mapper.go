@@ -201,9 +201,21 @@ func extractNames(format string) ([]*namedParameter, error) {
 				continue
 			}
 
-			if !bytes.ContainsAny(s[i:i+1], valid) {
-				return nil, fmt.Errorf("unsupported symol %q in format string at %d", s[i], i)
+			if !bytes.ContainsAny(s[i:i+1], valid) && s[i] != '\n' {
+				return nil, fmt.Errorf("%q - unsupported symbol %q in format string at pos %d", s, s[i], i)
 			}
+
+			// last symbol
+			if i == length-1 {
+				if s[i] != '\n' {
+					name += string(s[i])
+				}
+				names = append(names, &namedParameter{
+					name: name, strPos: pos,
+				})
+				break
+			}
+
 			name += string(s[i])
 		}
 	}
