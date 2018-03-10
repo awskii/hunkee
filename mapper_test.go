@@ -2,6 +2,7 @@ package hunkee
 
 import (
 	"fmt"
+	"io"
 	"net"
 	"net/url"
 	"strings"
@@ -185,4 +186,64 @@ func TestExtractNames(t *testing.T) {
 	if err == nil || !strings.Contains(err.Error(), expErr) {
 		t.Fatalf("%q - expected error %q, got %q", ic, expErr+"..", err)
 	}
+}
+
+func TestExtractFieldsOnTags(t *testing.T) {
+	type (
+		notSoEasy struct {
+			Id            uint64        `hunk:"id"`
+			IdRaw         string        `hunk:"id_raw"`
+			Token         string        `hunk:"token"`
+			TokenRaw      string        `hunk:"token_raw"`
+			Temp          float64       `hunk:"temp"`
+			TempRaw       string        `hunk:"temp_raw"`
+			Nice          bool          `hunk:"nice"`
+			Ch            rune          `hunk:"ch"`
+			Date          time.Time     `hunk:"date"`
+			Dur           time.Duration `hunk:"dur"`
+			ExplicitURL   url.URL       `hunk:"explicit_url"`
+			IP            net.Addr      `hunk:"ip"`
+			ignoreIt      bool          `hunk:"ignore_it"`
+			failWithIt    []byte        `hunk:"fail_with_it"`
+			FailWithItToo []byte        `hunk:"Fail_with_it_too"`
+		}
+
+		withReader struct {
+			Name string    `hunk:"name"`
+			R    io.Reader `hunk:"r"`
+		}
+	)
+
+	var (
+		nse notSoEasy
+		wr  withReader
+	)
+
+	f, err := extractFieldsOnTags(nse)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	in := func(k string, valid []string) bool {
+		for i := 0; i < len(valid); i++ {
+			if valid[i] == k {
+				return true
+			}
+		}
+		return false
+	}
+
+	hasRaw := []string{"id", "token", "temp"}
+
+	for k, v := range f {
+		if in(k, hasRaw) && !v.hasRaw {
+			t.Fatalf("field %q has raw in structure but that field was not detected", k)
+		}
+	}
+
+	_, err = extractFieldsOnTags(wr)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
 }
