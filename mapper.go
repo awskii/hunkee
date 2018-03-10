@@ -190,9 +190,8 @@ func extractNames(format string) ([]*namedParameter, error) {
 				names = append(names, &namedParameter{
 					name: name, strPos: pos,
 				})
-				if debug {
-					log.Printf("Field %q: %+v\n", name, names[len(names)-1])
-				}
+
+				pdebug(fmt.Sprintf("Field %q: %+v", name, names[len(names)-1]))
 
 				inName = false
 				name = ""
@@ -220,8 +219,12 @@ func extractNames(format string) ([]*namedParameter, error) {
 		}
 	}
 
-	if debug {
-		log.Printf("format string has been succesfully parsed")
-	}
+	pdebug("format string has been succesfully parsed")
 	return names, nil
+}
+
+func pdebug(msg string) {
+	if debug {
+		log.Println(msg)
+	}
 }
