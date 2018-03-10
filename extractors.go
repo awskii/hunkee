@@ -1,7 +1,7 @@
 package hunkee
 
 import (
-	"fmt"
+	"log"
 	"net"
 	"net/url"
 	"reflect"
@@ -32,10 +32,14 @@ func (p *Parser) parseLine(line string, dest interface{}) (err error) {
 		w      = p.mapper.aquireWorker()
 	)
 
-	pdebug(fmt.Sprintf("Entry: %q Len: %d", line, len(line)))
+	if debug {
+		log.Printf("Entry: %q Len: %d\n", line, len(line))
+	}
 
 	if p.mapper.prefixActive && strings.HasPrefix(line, p.mapper.comPrefix) {
-		pdebug(fmt.Sprintf("Entry: %q skipped due to has prefix %q", line, p.mapper.comPrefix))
+		if debug {
+			log.Printf("Entry: %q skipped due to has prefix %q", line, p.mapper.comPrefix)
+		}
 		return
 	}
 
@@ -62,7 +66,9 @@ func (p *Parser) parseLine(line string, dest interface{}) (err error) {
 			token = line[offset:end]
 		}
 
-		pdebug(fmt.Sprintf("Token: %q [%d:%d] After: %d", token, offset, end, field.after))
+		if debug {
+			log.Printf("Token: %q [%d:%d] After: %d\n", token, offset, end, field.after)
+		}
 
 		destination := reflect.Indirect(reflect.ValueOf(dest))
 		if err = p.mapper.processField(field, destination, token); err != nil {
