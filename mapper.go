@@ -14,10 +14,11 @@ import (
 type mapper struct {
 	// no mutexes because we write to fields and tokenSeq
 	// only once when building up structure
-	mu        sync.RWMutex
-	fields    map[string]*field
-	tokensSeq []string
-	workers   []*worker
+	mu           sync.RWMutex
+	fields       map[string]*field
+	tokensSeq    []string
+	comPrefix    string // skip line if line has such prefix
+	prefixActive bool   // if false, prefix check will be disabled
 }
 
 // field represents structure field
@@ -189,6 +190,7 @@ func extractNames(format string) ([]*namedParameter, error) {
 				names = append(names, &namedParameter{
 					name: name, strPos: pos,
 				})
+
 				if debug {
 					log.Printf("Field %q: %+v\n", name, names[len(names)-1])
 				}
@@ -200,15 +202,27 @@ func extractNames(format string) ([]*namedParameter, error) {
 				continue
 			}
 
-			if !bytes.ContainsAny(s[i:i+1], valid) {
-				return nil, fmt.Errorf("unsupported symol %q in format string at %d", s[i], i)
+			if !bytes.ContainsAny(s[i:i+1], valid) && s[i] != '\n' {
+				return nil, fmt.Errorf("%q - unsupported symbol %q in format string at pos %d", s, s[i], i)
 			}
+
+			// last symbol
+			if i == len(s)-1 {
+				if s[i] != '\n' {
+					name += string(s[i])
+				}
+				names = append(names, &namedParameter{
+					name: name, strPos: pos,
+				})
+				break
+			}
+
 			name += string(s[i])
 		}
 	}
 
 	if debug {
-		log.Printf("format string has been succesfully parsed")
+		log.Println("format string has been succesfully parsed")
 	}
 	return names, nil
 }

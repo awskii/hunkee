@@ -76,6 +76,11 @@ func (p *Parser) TimeOption(tag string) *TimeOption {
 	return nil
 }
 
+func (p *Parser) SetCommentPrefix(pref string) {
+	p.mapper.comPrefix = pref
+	p.mapper.prefixActive = true
+}
+
 // ParseLine gets line of input and structure to parse in
 func (p *Parser) ParseLine(line string, to interface{}) error {
 	return p.parseLine(line, to)
