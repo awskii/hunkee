@@ -28,13 +28,13 @@ func (m *mapper) processField(field *field, final reflect.Value, token string) e
 	}
 	switch field.typ.Kind() {
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-		i64, err := processInt(field.typ.Kind(), token)
+		i64, err := parseInt(field.typ.Kind(), token)
 		if err != nil {
 			return err
 		}
 		v.SetInt(i64)
 	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
-		ui64, err := processUint(field.typ.Kind(), token)
+		ui64, err := parseUint(field.typ.Kind(), token)
 		if err != nil {
 			return err
 		}
@@ -42,13 +42,13 @@ func (m *mapper) processField(field *field, final reflect.Value, token string) e
 	case reflect.String:
 		v.SetString(token)
 	case reflect.Float32, reflect.Float64:
-		fl64, err := processFloat(field.typ.Kind(), token)
+		fl64, err := parseFloat(field.typ.Kind(), token)
 		if err != nil {
 			return err
 		}
 		v.SetFloat(fl64)
 	case reflect.Struct:
-		processStringToStruct(v, token, field)
+		parseStringToStruct(v, token, field)
 	case reflect.Interface:
 		// work only with net.Addr
 		if v.Type() != reflect.TypeOf((*net.Addr)(nil)) {
@@ -67,16 +67,16 @@ func (m *mapper) processField(field *field, final reflect.Value, token string) e
 	return nil
 }
 
-func processUint(kind reflect.Kind, token string) (uint64, error) {
+func parseUint(kind reflect.Kind, token string) (uint64, error) {
 	var size int
 	switch kind {
-	case reflect.Uint, reflect.Uint8:
+	case reflect.Uint8:
 		size = 8
 	case reflect.Uint16:
 		size = 16
 	case reflect.Uint32:
 		size = 32
-	case reflect.Uint64:
+	case reflect.Uint64, reflect.Uint:
 		size = 64
 	default:
 		return 0, ErrNotUint
@@ -85,7 +85,7 @@ func processUint(kind reflect.Kind, token string) (uint64, error) {
 	return strconv.ParseUint(token, 10, size)
 }
 
-func processInt(kind reflect.Kind, token string) (int64, error) {
+func parseInt(kind reflect.Kind, token string) (int64, error) {
 	var size int
 	switch kind {
 	case reflect.Int, reflect.Int8:
@@ -103,7 +103,7 @@ func processInt(kind reflect.Kind, token string) (int64, error) {
 	return strconv.ParseInt(token, 10, size)
 }
 
-func processFloat(kind reflect.Kind, token string) (float64, error) {
+func parseFloat(kind reflect.Kind, token string) (float64, error) {
 	var size int
 	switch kind {
 	case reflect.Float32:
@@ -117,9 +117,9 @@ func processFloat(kind reflect.Kind, token string) (float64, error) {
 	return strconv.ParseFloat(token, size)
 }
 
-// processStringToStruct gets token and parses it into
+// parseStringToStruct gets token and parses it into
 // net.Addr, time.Time, time.Duration, url.URL
-func processStringToStruct(v reflect.Value, token string, field *field) (err error) {
+func parseStringToStruct(v reflect.Value, token string, field *field) (err error) {
 	switch v.Type() {
 	case typeTime:
 		var t time.Time
