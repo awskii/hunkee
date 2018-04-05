@@ -88,13 +88,13 @@ func parseUint(kind reflect.Kind, token string) (uint64, error) {
 func parseInt(kind reflect.Kind, token string) (int64, error) {
 	var size int
 	switch kind {
-	case reflect.Int, reflect.Int8:
+	case reflect.Int8:
 		size = 8
 	case reflect.Int16:
 		size = 16
 	case reflect.Int32:
 		size = 32
-	case reflect.Int64:
+	case reflect.Int, reflect.Int64:
 		size = 64
 	default:
 		return 0, ErrNotInt
@@ -117,6 +117,8 @@ func parseFloat(kind reflect.Kind, token string) (float64, error) {
 	return strconv.ParseFloat(token, size)
 }
 
+var ErrNilTimeOptions = errors.New("nil time options, time cannot be parsed")
+
 // parseStringToStruct gets token and parses it into
 // net.Addr, time.Time, time.Duration, url.URL
 func parseStringToStruct(v reflect.Value, token string, field *field) (err error) {
@@ -124,7 +126,7 @@ func parseStringToStruct(v reflect.Value, token string, field *field) (err error
 	case typeTime:
 		var t time.Time
 		if field.timeOptions == nil {
-			panic("nil time options")
+			return ErrNilTimeOptions
 		}
 
 		if field.timeOptions.Location == nil {
