@@ -19,6 +19,7 @@ var (
 	typeTime     = reflect.TypeOf(time.Time{})
 	typeDuration = reflect.TypeOf(time.Second)
 	typeURL      = reflect.TypeOf(url.URL{})
+	typeURLp     = reflect.TypeOf(new(url.URL))
 	typeIP       = reflect.TypeOf(net.IP{})
 )
 

@@ -1,6 +1,8 @@
 package hunkee
 
 import (
+	"net"
+	"net/url"
 	"reflect"
 	"testing"
 	"time"
@@ -221,5 +223,69 @@ func TestParseStringToStructTime(t *testing.T) {
 	if err == nil {
 		t.Error(err)
 	}
+}
 
+func TestParseStringToStructDuration(t *testing.T) {
+	t.Parallel()
+
+	var (
+		f = new(field)
+		d time.Duration
+	)
+
+	if err := parseStringToStruct(reflect.ValueOf(&d), "", f); err == nil {
+		t.Errorf("expected %s, got nil error", "some error")
+	}
+
+	err := parseStringToStruct(reflect.ValueOf(&d).Elem(), "17s", f)
+	if err != nil {
+		t.Error(err)
+	} else if d.Seconds() != 17 {
+		t.Errorf("parsed and source duration are not matched: %s != %d", d, 17)
+	}
+
+	err = parseStringToStruct(reflect.ValueOf(&d).Elem(), "20x", f)
+	if err == nil {
+		t.Error("expected parsing error, got nil")
+	}
+}
+
+func TestParseStringToStructURL(t *testing.T) {
+	t.Parallel()
+
+	var (
+		f = new(field)
+		u *url.URL
+	)
+
+	if err := parseStringToStruct(reflect.ValueOf(&u), "", f); err == nil {
+		t.Errorf("expected %s, got nil error", "some error")
+	}
+
+	err := parseStringToStruct(reflect.ValueOf(&u).Elem(), "http://localhost:81/pattern?p1=a&p2=b&p3=c#wow", f)
+	if err != nil {
+		t.Error(err)
+	} else if u.Hostname() != "localhost" || u.Query().Get("p2") != "b" || u.Fragment != "wow" {
+		t.Errorf("parsed and source URLs are not matched: %q != %q", "http://localhost:81/pattern?p1=a&p2=b&p3=c#wow", u.String())
+	}
+}
+
+func TestParseStringToStructIP(t *testing.T) {
+	t.Parallel()
+
+	var (
+		f = new(field)
+		i net.IP
+	)
+
+	if err := parseStringToStruct(reflect.ValueOf(&i), "", f); err == nil {
+		t.Errorf("expected %s, got nil error", "some error")
+	}
+
+	err := parseStringToStruct(reflect.ValueOf(&i).Elem(), "172.17.254.1", f)
+	if err != nil {
+		t.Error(err)
+	} else if i.Equal(net.IPv4(172, 17, 254, 1)) {
+
+	}
 }
