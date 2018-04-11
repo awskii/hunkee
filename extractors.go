@@ -47,9 +47,10 @@ func (p *Parser) parseLine(line string, dest interface{}) (err error) {
 		log.Printf("Entry: %q Len: %d\n", line, len(line))
 	}
 
+	// Check if line has commentary prefix. If so, skip
 	if p.mapper.prefixActive && strings.HasPrefix(line, p.mapper.comPrefix) {
 		if debug {
-			log.Printf("Entry: %q skipped due to has prefix %q", line, p.mapper.comPrefix)
+			log.Printf("Entry: %q skipped due to matched prefix %q", line, p.mapper.comPrefix)
 		}
 		return
 	}
@@ -63,6 +64,8 @@ func (p *Parser) parseLine(line string, dest interface{}) (err error) {
 			if to == nil {
 				panic("not initialized TimeOptions for field " + field.name)
 			}
+			// TODO find other way to distinct end of time value. Issued when using time formats with
+			// unconstant value length like RFC 1123
 			end = offset + len(to.Layout)
 		} else {
 			end = findNextSpace(line, offset)
@@ -78,7 +81,7 @@ func (p *Parser) parseLine(line string, dest interface{}) (err error) {
 		}
 
 		if debug {
-			log.Printf("Token: %q [%d:%d] After: %d\n", token, offset, end, field.after)
+			log.Printf("Token: %q [%d:%d] After: %d TimeOption: %#+v\n", token, offset, end, field.after, field.timeOptions)
 		}
 
 		destination := reflect.Indirect(reflect.ValueOf(dest))

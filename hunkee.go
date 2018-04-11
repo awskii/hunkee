@@ -53,6 +53,8 @@ func (p *Parser) SetTimeLayout(tag, timeLayout string) {
 	p.mapper.fields[tag].timeOptions.Layout = timeLayout
 }
 
+// SetMultiplyTimeLayout recieves map of TAG -> LAYOUT and sets up
+// proposed layouts for different fields by their tag.
 func (p *Parser) SetMultiplyTimeLayout(tagToLayouts map[string]string) {
 	for tag, layout := range tagToLayouts {
 		p.SetTimeLayout(tag, layout)
