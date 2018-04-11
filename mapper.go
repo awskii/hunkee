@@ -107,7 +107,6 @@ func extractFieldsOnTags(arg interface{}) (map[string]*field, error) {
 
 	// If v is still not a struct - done with error
 	if v.Kind() != reflect.Struct {
-		fmt.Println(v.Kind().String())
 		return nil, ErrOnlyStructs
 	}
 
