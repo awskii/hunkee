@@ -23,9 +23,11 @@ func NewParser(format string, to interface{}) (*Parser, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Parser{
+	p := &Parser{
 		mapper: mapper,
-	}, nil
+	}
+	p.SetCommentPrefix("#")
+	return p, nil
 }
 
 type TimeOption struct {
@@ -77,6 +79,9 @@ func (p *Parser) TimeOption(tag string) *TimeOption {
 	return nil
 }
 
+// SetCommentPrefix recieves prefix which from will be start commented lines.
+// As soon parser will get string with such prefix, that line will be ignored.
+// Default commentary prefix is '#'.
 func (p *Parser) SetCommentPrefix(pref string) {
 	p.mapper.comPrefix = pref
 	p.mapper.prefixActive = true
