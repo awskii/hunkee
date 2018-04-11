@@ -83,7 +83,7 @@ func (p *Parser) parseLine(line string, dest interface{}) (err error) {
 
 		destination := reflect.Indirect(reflect.ValueOf(dest))
 		if err = p.mapper.processField(field, destination, token); err != nil {
-			break
+			return err
 		}
 
 		// update current offset
