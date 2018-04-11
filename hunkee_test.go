@@ -2,58 +2,126 @@ package hunkee
 
 import (
 	"fmt"
-	"regexp"
-	"strconv"
 	"testing"
 	"time"
 )
 
-type Beach struct {
-	ID   uint16    `hunk:"id"`
-	Name string    `hunk:"name"`
-	LoAc uint8     `hunk:"lo_ac"`
-	Temp float32   `hunk:"temp"`
-	Time time.Time `hunk:"time"`
+func TestNewParser(t *testing.T) {
+	var s struct {
+		Int int `hunk:"int"`
+	}
+
+	_, err := NewParser(":ab: :c", &s)
+	if err == nil {
+		t.Error("expected init error, got nil")
+	}
 }
 
-var (
-	parser     *Parser
-	bch        = new(Beach)
-	timeLayout = time.RFC822
-	format     = ":time :id :name :lo_ac :temp"
-	entry      = "02 Jan 06 15:04 MST 17522 Brighton 20 25.6"
-)
+func TestSetTimeLayout(t *testing.T) {
+	var s struct {
+		T  time.Time `hunk:"t"`
+		Tr string    `hunk:"t_raw"`
+	}
 
-func init() {
-	var err error
-	parser, err = NewParser(format, bch)
+	p, err := NewParser(":t", &s)
 	if err != nil {
-		panic(err)
+		t.Error("unexpected init error " + err.Error())
+	}
+
+	p.SetTimeLayout("t", time.Kitchen)
+	str := "5:43PM"
+	if err := p.ParseLine(str, &s); err != nil {
+		t.Error(err)
+	}
+
+	if s.T.Minute() != 43 {
+		t.Errorf("unexpected value after parsing:\nhave: %d\nwant %d", s.T.Minute(), 43)
+	}
+
+	if s.Tr != "5:43PM" {
+		t.Errorf("expected another raw value:\nhave: %q\nwant: %q", s.Tr, str)
 	}
 }
 
-func BenchmarkParse(b *testing.B) {
-	for i := 0; i < b.N; i++ {
-		if err := parser.ParseLine(entry, bch); err != nil {
-			fmt.Println(err)
-		}
+func TestSetMultiplyTimeLayouts(t *testing.T) {
+	var s struct {
+		A  time.Time `hunk:"a"`
+		B  time.Time `hunk:"b"`
+		C  time.Time `hunk:"c"`
+		D  time.Time `hunk:"d"`
+		E  time.Time `hunk:"e"`
+		Cr string    `hunk:"c_raw"`
+	}
+
+	p, err := NewParser(":a :b :d :e :c", &s)
+	if err != nil {
+		t.Error("unexpected init error " + err.Error())
+	}
+	if p == nil {
+		t.Fatal("returned nil parser")
+	}
+
+	layouts := map[string]string{
+		"a": time.RFC3339,
+		"b": time.RFC1123,
+		"c": time.RFC1123,
+		"d": time.Kitchen,
+		"e": "2006-01-02 15:04:05",
+	}
+
+	v := map[string]string{
+		"a": "2018-07-28T21:10:45+10:00",
+		"b": "Tue, 10 Apr 2018 19:17:21 UTC",
+		"c": "Tue, 10 Apr 2018 19:17:33 UTC",
+		"d": "5:43PM",
+		"e": "2006-01-02 03:04:05",
+	}
+
+	p.SetMultiplyTimeLayout(layouts)
+	str := fmt.Sprintf("%s %s %s %s %s", v["a"], v["b"], v["d"], v["e"], v["c"])
+	if err := p.ParseLine(str, &s); err != nil {
+		t.Error(err)
+	}
+
+	if _, o := s.A.Zone(); o != 36000 || s.A.Year() != 2018 || s.A.Hour() != 21 {
+		t.Errorf("wrong parsed time with options:\nhave: %q\nwant: %q", s.A.String(), v["a"])
+	}
+
+	if _, o := s.C.Zone(); o != 0 || s.C.Month() != 4 || s.C.Second() != 33 {
+		t.Errorf("wrong parsed time with options:\nhave: %q\nwant: %q", s.C.String(), v["c"])
+	}
+
+	if s.D.Hour() != 17 || s.D.Minute() != 43 {
+		t.Errorf("wrong parsed time with options:\nhave: %q\nwant: %q", s.D.String(), v["d"])
 	}
 }
 
-func BenchmarkParseRE(b *testing.B) {
-	var LogRecordRegex = regexp.MustCompile(`^(\d{2}\s[A-Z][a-z]{2}\s[0-9]{2}\s[0-9]{2}:[0-9]{2})\s([A-Z]{3})\s+(\d)+\s+(\w)+\s+(\d{2})\s+([0-9]+\.\d+)$`)
+func TestParseCommentedLine(t *testing.T) {
+	var s struct {
+		ID   int    `hunk:"id"`
+		Name string `hunk:"name"`
+	}
 
-	bch := new(Beach)
-	for i := 0; i < b.N; i++ {
-		tokens := LogRecordRegex.FindStringSubmatch(entry)
-		u16, _ := strconv.ParseUint(tokens[1], 10, 16)
-		bch.ID = uint16(u16)
-		bch.Name = tokens[2]
+	p, err := NewParser(":id :name", &s)
+	if err != nil {
+		t.Error("unexpected error: " + err.Error())
+	}
 
-		u8, _ := strconv.ParseUint(tokens[3], 10, 8)
-		bch.LoAc = uint8(u8)
-		f32, _ := strconv.ParseFloat(tokens[4], 32)
-		bch.Temp = float32(f32)
-		bch.Time, _ = time.Parse(timeLayout, tokens[0])
+	if err := p.parseLine("#17 your_name_here\n", &s); err != nil {
+		t.Error(err)
+	}
+	if s.ID != 0 {
+		t.Errorf("unexpected result of parsing commented string:\nhave: %d\nwant: %d", s.ID, 0)
+	}
+
+	if err := p.parseLine("998 Gordon", &s); err != nil {
+		t.Error(err)
+	}
+
+	if s.ID != 998 {
+		t.Errorf("unexpected result of parsing commented string:\nhave: %d\nwant: %d", s.ID, 998)
+	}
+	if s.Name != "Gordon" {
+		t.Errorf("unexpected result of parsing commented string:\nhave: %s\nwant: %s", s.Name, "Gordon")
 	}
 }

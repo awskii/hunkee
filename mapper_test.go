@@ -72,7 +72,7 @@ func TestInitMapper(t *testing.T) {
 
 	_, err := initMapper(tef, &te)
 	if err != nil {
-		t.Fatalf("Mapper initialization over %q should be finished without error, but got: %s", tef, err)
+		t.Fatalf("Mapper initialization over %q should be finished without error, but have: %s", tef, err)
 	}
 	_, err = initMapper(badWithPoint, &te)
 	if err == nil {
@@ -118,12 +118,12 @@ func TestExtractNames(t *testing.T) {
 
 	for i := 0; i < len(p)-1; i++ {
 		if p[i].offset != 1 {
-			t.Fatalf("for case 'A' expected every offset to be equal 1, got %d", p[i].offset)
+			t.Fatalf("for case 'A' expected every offset to be equal 1, have %d", p[i].offset)
 		}
 	}
 
 	if p[la-1].offset != 0 {
-		t.Fatalf("for case 'A' expected latest offset to be equal 0, got %d", p[la-1].offset)
+		t.Fatalf("for case 'A' expected latest offset to be equal 0, have %d", p[la-1].offset)
 	}
 
 	// case B
@@ -139,11 +139,11 @@ func TestExtractNames(t *testing.T) {
 
 	for i := 0; i < len(p)-1; i++ {
 		if p[i].offset != 1 {
-			t.Fatalf("for case 'B' expected every offset to be equal 0, got %d", p[i].offset)
+			t.Fatalf("for case 'B' expected every offset to be equal 0, have %d", p[i].offset)
 		}
 	}
 	if p[lb-1].offset != 0 {
-		t.Fatalf("for case 'B' expected latest offset to be equal 0, got %d", p[lb-1].offset)
+		t.Fatalf("for case 'B' expected latest offset to be equal 0, have %d", p[lb-1].offset)
 	}
 
 	// case C -- not implemented
@@ -159,7 +159,7 @@ func TestExtractNames(t *testing.T) {
 	// for i := 0; i < len(p)-1; i++ {
 	// fmt.Println(p[i].name)
 	// if p[i].offset != 1 {
-	// t.Fatalf("for case 'B' expected every offset to be equal 0, got %d", p[i].offset)
+	// t.Fatalf("for case 'B' expected every offset to be equal 0, have %d", p[i].offset)
 	// }
 	//  }
 
@@ -170,21 +170,21 @@ func TestExtractNames(t *testing.T) {
 		fmt.Println(p[i].name)
 	}
 	if err == nil || !strings.Contains(err.Error(), expErr) {
-		t.Fatalf("%q - expected error %q, got %q", ia, expErr+"..", err)
+		t.Fatalf("%q - expected error %q, have %q", ia, expErr+"..", err)
 	}
 
 	// case IB
 	expErr = "unsupported symbol"
 	_, err = extractNames(ib)
 	if err == nil || !strings.Contains(err.Error(), expErr) {
-		t.Fatalf("%q - expected error %q, got %q", ib, expErr+"..", err)
+		t.Fatalf("%q - expected error %q, have %q", ib, expErr+"..", err)
 	}
 
 	// case IC
 	expErr = "unsupported symbol"
 	p, err = extractNames(ic)
 	if err == nil || !strings.Contains(err.Error(), expErr) {
-		t.Fatalf("%q - expected error %q, got %q", ic, expErr+"..", err)
+		t.Fatalf("%q - expected error %q, have %q", ic, expErr+"..", err)
 	}
 }
 
@@ -246,4 +246,36 @@ func TestExtractFieldsOnTags(t *testing.T) {
 		t.Fatal(err.Error())
 	}
 
+	var abc interface{}
+	_, err = extractFieldsOnTags(abc)
+	if err == nil {
+		t.Fatalf("expected %s have nil error", ErrOnlyStructs)
+	}
+}
+
+func TestMapperRaw(t *testing.T) {
+	t.Parallel()
+
+	var te struct {
+		IDr   string    `hunk:"id_raw"`
+		ID    int       `hunk:"id"`
+		Name  string    `hunk:"name"`
+		Added time.Time `hunk:"added"`
+	}
+
+	tef := ":id :name :added"
+	m, err := initMapper(tef, &te)
+	if err != nil {
+		t.Fatalf("Mapper initialization over %q should be finished without error, but have: %s", tef, err)
+	}
+
+	f := m.raw(m.getField("id"))
+	if f == nil {
+		t.Error("expected non-nil _raw value, have nil")
+	}
+
+	f = m.raw(m.getField("name"))
+	if f != nil {
+		t.Error("unexpected non-nil _raw value, want nil")
+	}
 }

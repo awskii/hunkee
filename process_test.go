@@ -1,6 +1,8 @@
 package hunkee
 
 import (
+	"fmt"
+	"io"
 	"net"
 	"net/url"
 	"reflect"
@@ -270,22 +272,223 @@ func TestParseStringToStructURL(t *testing.T) {
 	}
 }
 
-func TestParseStringToStructIP(t *testing.T) {
+func TestProcessFieldInt(t *testing.T) {
 	t.Parallel()
 
-	var (
-		f = new(field)
-		i net.IP
-	)
-
-	if err := parseStringToStruct(reflect.ValueOf(&i), "", f); err == nil {
-		t.Errorf("expected %s, got nil error", "some error")
+	type st struct {
+		Ui uint64 `hunk:"ui"`
+		I  int64  `hunk:"i"`
+		Ir string `hunk:"i_raw"`
+		B  bool   `hunk:"b"`
+		S  string `hunk:"s"`
 	}
+	s := new(st)
 
-	err := parseStringToStruct(reflect.ValueOf(&i).Elem(), "172.17.254.1", f)
+	m, err := initMapper(":ui :i :b :s", s)
 	if err != nil {
 		t.Error(err)
-	} else if i.Equal(net.IPv4(172, 17, 254, 1)) {
+	}
 
+	var (
+		i  int64  = 924
+		is string = fmt.Sprintf("%d", i)
+	)
+
+	err = m.processField(m.getField("i"), reflect.Indirect(reflect.ValueOf(s)), is)
+	if err != nil {
+		t.Error(err)
+	}
+	if s.I != i {
+		t.Errorf("int was parsed wrong, expect %d, got %d", i, s.I)
+	}
+	if s.Ir != is {
+		t.Errorf("bad value present in _raw field, expect %s, got %s", is, s.Ir)
+	}
+
+	err = m.processField(m.getField("i"), reflect.Indirect(reflect.ValueOf(s)), "924.1")
+	if err == nil {
+		t.Error("expected parsing error while parse bad int64 value, got nil")
+	}
+}
+
+func TestProcessFieldUint(t *testing.T) {
+	t.Parallel()
+
+	type st struct {
+		Ui uint64 `hunk:"ui"`
+		I  int64  `hunk:"i"`
+		Ir string `hunk:"i_raw"`
+		B  bool   `hunk:"b"`
+		S  string `hunk:"s"`
+	}
+	s := new(st)
+
+	m, err := initMapper(":ui :i :b :s", s)
+	if err != nil {
+		t.Error(err)
+	}
+
+	var ui uint64 = 924
+	err = m.processField(m.getField("ui"), reflect.Indirect(reflect.ValueOf(s)), fmt.Sprintf("%d", ui))
+	if err != nil {
+		t.Error(err)
+	}
+	if s.Ui != ui {
+		t.Errorf("uint was parsed wrong, expect %d, got %d", ui, s.I)
+	}
+
+	err = m.processField(m.getField("ui"), reflect.Indirect(reflect.ValueOf(s)), "-1")
+	if err == nil {
+		t.Error("expected parsing error while parse bad uint64 value, got nil")
+	}
+}
+
+func TestProcessFieldBool(t *testing.T) {
+	t.Parallel()
+
+	type st struct {
+		B  bool   `hunk:"b"`
+		Br string `hunk:"b_raw"`
+	}
+	s := new(st)
+
+	m, err := initMapper(":b ", s)
+	if err != nil {
+		t.Error(err)
+	}
+
+	err = m.processField(m.getField("b"), reflect.Indirect(reflect.ValueOf(s)), "true")
+	if err != nil {
+		t.Error(err)
+	}
+	if !s.B {
+		t.Errorf("bool was parsed wrong, expect %t, got %t", true, s.B)
+	}
+	if s.Br != "true" {
+		t.Errorf("bad raw value for bool: %s, want %s", s.Br, "true")
+	}
+
+	err = m.processField(m.getField("b"), reflect.Indirect(reflect.ValueOf(s)), "ftrue")
+	if err == nil {
+		t.Error("expected parsing error while parse bad boolean value, got nil")
+	}
+}
+
+func TestProcessFieldFloat(t *testing.T) {
+	t.Parallel()
+
+	type st struct {
+		F  float32 `hunk:"f"`
+		Fr string  `hunk:"f_raw"`
+	}
+	s := new(st)
+
+	m, err := initMapper(":f", s)
+	if err != nil {
+		t.Error(err)
+	}
+
+	var f float32 = 32.1684
+	err = m.processField(m.getField("f"), reflect.Indirect(reflect.ValueOf(s)), fmt.Sprintf("%f", f))
+	if err != nil {
+		t.Error(err)
+	}
+	if s.F != f {
+		t.Errorf("bool was parsed wrong, expect %f, got %f", 32.1684, s.F)
+	}
+
+	err = m.processField(m.getField("f"), reflect.Indirect(reflect.ValueOf(s)), "32.123.1")
+	if err == nil {
+		t.Error("expected parsing error while parse bad float32 value, got nil")
+	}
+}
+
+func TestProcessFieldString(t *testing.T) {
+	t.Parallel()
+
+	type st struct {
+		S string `hunk:"s"`
+	}
+	s := new(st)
+
+	m, err := initMapper(":s", s)
+	if err != nil {
+		t.Error(err)
+	}
+
+	msg := "some wow message here"
+	err = m.processField(m.getField("s"), reflect.Indirect(reflect.ValueOf(s)), msg)
+	if err != nil {
+		t.Error(err)
+	}
+	if s.S != msg {
+		t.Errorf("string was parsed wrong, expect %s, got %s", msg, s.S)
+	}
+}
+
+func TestProcessFieldNotSupported(t *testing.T) {
+	t.Parallel()
+
+	type st struct {
+		W io.Writer `hunk:"s"`
+	}
+	s := new(st)
+
+	m, err := initMapper(":s", s)
+	if err != nil {
+		t.Error(err)
+	}
+
+	w := "172.17.254.1"
+	err = m.processField(m.getField("s"), reflect.Indirect(reflect.ValueOf(s)), w)
+	if err == nil {
+		t.Error("expected error of not supported, got nil")
+	}
+}
+
+func TestProcessFieldIP(t *testing.T) {
+	t.Parallel()
+
+	type st struct {
+		IP     net.IP `hunk:"ip"`
+		IPrawr string `hunk:"ip_raw"`
+	}
+	s := new(st)
+
+	m, err := initMapper(":ip", s)
+	if err != nil {
+		t.Error(err)
+	}
+
+	ip := "241.74.91.45"
+	err = m.processField(m.getField("ip"), reflect.Indirect(reflect.ValueOf(s)), ip)
+	if err != nil {
+		t.Error(err)
+	}
+	if !s.IP.Equal(net.IPv4(241, 74, 91, 45)) {
+		t.Errorf("net.IP was parsed wrong, expect %s, got %s", ip, s.IP)
+	}
+	if s.IPrawr != ip {
+		t.Errorf("net.IP raw was not stored, expect %s, got %s", ip, s.IP)
+	}
+}
+
+func TestProcessTag(t *testing.T) {
+	tag := reflect.StructTag("")
+	_, _, err := processTag(tag)
+	if err != nil {
+		t.Error(err)
+	}
+
+	tag = reflect.StructTag(`hunk:""`)
+	_, _, err = processTag(tag)
+	if err != nil {
+		t.Error(err)
+	}
+
+	tag = reflect.StructTag(`hunk:"alia,s"`)
+	_, _, err = processTag(tag)
+	if err != ErrComaNotSupported {
+		t.Errorf("expected %s error, got %v", ErrComaNotSupported, err)
 	}
 }
