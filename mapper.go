@@ -122,8 +122,7 @@ func extractFieldsOnTags(arg interface{}) (map[string]*field, error) {
 
 		tag, normalizedTag, err := processTag(f.Tag)
 		if err != nil {
-			fmt.Println(err)
-			continue
+			return nil, err
 		}
 
 		// Check if field already indexed

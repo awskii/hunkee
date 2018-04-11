@@ -54,12 +54,18 @@ func (m *mapper) processField(field *field, final reflect.Value, token string) e
 		}
 		v.SetFloat(fl64)
 	case reflect.Struct:
-		parseStringToStruct(v, token, field)
-	case reflect.Interface:
-		// work only with net.Addr
-		if v.Type() != reflect.TypeOf((*net.Addr)(nil)) {
-			return ErrNotSupportedType
+		if err := parseStringToStruct(v, token, field); err != nil {
+			return err
 		}
+	case kindByteSlice:
+		// TODO find better way to distinct net.IP type
+		if field.typ.String() != "net.IP" {
+			return fmt.Errorf("type %s is not supported", field.typ.String())
+		}
+		ip := net.ParseIP(token)
+		v.Set(reflect.ValueOf(ip))
+	default:
+		return fmt.Errorf("type %s is not supported", field.typ.String())
 	}
 
 	// set raw value
