@@ -27,6 +27,12 @@ func (m *mapper) processField(field *field, final reflect.Value, token string) e
 		v.Set(reflect.New(deref(v.Type())))
 	}
 	switch field.typ.Kind() {
+	case reflect.Bool:
+		b, err := strconv.ParseBool(token)
+		if err != nil {
+			return err
+		}
+		v.SetBool(b)
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 		i64, err := parseInt(field.typ.Kind(), token)
 		if err != nil {
