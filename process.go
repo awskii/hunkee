@@ -1,7 +1,6 @@
 package hunkee
 
 import (
-	"errors"
 	"fmt"
 	"net"
 	"net/url"
@@ -9,14 +8,6 @@ import (
 	"strconv"
 	"strings"
 	"time"
-)
-
-var (
-	ErrNotUint  = errors.New("corresponded kind is not Uint-like")
-	ErrNotInt   = errors.New("corresponded kind is not Int-like")
-	ErrNotFloat = errors.New("corresponded kind is not Float32 or Float64")
-
-	ErrNotSupportedType = errors.New("corresponded kind is not supported")
 )
 
 // processField gets token and parse it into corresponded type and puts into 'final' value
@@ -128,8 +119,6 @@ func parseFloat(kind reflect.Kind, token string) (float64, error) {
 
 	return strconv.ParseFloat(token, size)
 }
-
-var ErrNilTimeOptions = errors.New("nil time options, time cannot be parsed")
 
 // parseStringToStruct gets token and parses it into
 // net.Addr, time.Time, time.Duration, url.URL

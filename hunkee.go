@@ -6,13 +6,18 @@ import (
 )
 
 var (
-	ErrSyntax           = errors.New("syntax error")
-	ErrOnlyStructs      = errors.New("only struct types supported")
-	ErrNotSpecified     = errors.New("tag not specified")
+	ErrSyntax       = errors.New("syntax error")
+	ErrOnlyStructs  = errors.New("only struct types supported")
+	ErrNotSpecified = errors.New("tag not specified")
+	ErrNotUint      = errors.New("corresponded kind is not Uint-like")
+	ErrNotInt       = errors.New("corresponded kind is not Int-like")
+	ErrNotFloat     = errors.New("corresponded kind is not Float32 or Float64")
+	ErrEmptyLine    = errors.New("empty line passed")
+
 	ErrComaNotSupported = errors.New("coma-separated tag options is not supported")
 	ErrUnexpectedColon  = errors.New("unexpected ':' while parsing format string")
-
-	ErrEmptyLine = errors.New("empty line passed")
+	ErrNotSupportedType = errors.New("corresponded kind is not supported")
+	ErrNilTimeOptions   = errors.New("nil time options, time cannot be parsed")
 )
 
 type Parser struct {
