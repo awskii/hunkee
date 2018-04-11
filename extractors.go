@@ -15,15 +15,25 @@ const (
 )
 
 var (
-	// Pre-defined supported structure types
-	typeTime     = reflect.TypeOf(time.Time{})
-	typeDuration = reflect.TypeOf(time.Second)
-	typeURL      = reflect.TypeOf(url.URL{})
-	typeURLp     = reflect.TypeOf(new(url.URL))
-	typeIP       = reflect.TypeOf(net.IP{})
-)
+	debug bool
 
-var debug bool
+	_time time.Time
+	_dur  time.Duration
+	_url  url.URL
+	_urlp *url.URL
+	_ip   net.IP
+	_byte byte
+
+	// Pre-defined supported structure types
+	typeTime     = reflect.TypeOf(_time)
+	typeDuration = reflect.TypeOf(_dur)
+	typeURL      = reflect.TypeOf(_url)
+	typeURLp     = reflect.TypeOf(_urlp)
+	typeIP       = reflect.TypeOf(_ip)
+	typeByte     = reflect.TypeOf(_byte)
+
+	kindByteSlice = reflect.SliceOf(typeByte).Kind()
+)
 
 // parseLine processing one log line into structure
 func (p *Parser) parseLine(line string, dest interface{}) (err error) {

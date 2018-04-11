@@ -150,15 +150,12 @@ func parseStringToStruct(v reflect.Value, token string, field *field) (err error
 			return err
 		}
 		v.Set(reflect.ValueOf(d))
-	case typeURL, reflect.TypeOf(new(url.URL)):
+	case typeURL, typeURLp:
 		u, err := url.Parse(token)
 		if err != nil {
 			return err
 		}
 		v.Set(reflect.ValueOf(u))
-	case typeIP:
-		ip := net.ParseIP(token)
-		v.Set(reflect.ValueOf(ip))
 	default:
 		// return ErrNotSupportedType
 		return fmt.Errorf("type %s is not supported", v.Type())

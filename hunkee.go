@@ -36,6 +36,7 @@ type TimeOption struct {
 // SetDebug makes hunkee more verbose
 func (p *Parser) SetDebug(val bool) {
 	p.debug = val
+	debug = val
 }
 
 // SetTimeLayout setups provided time layout for time.Time
