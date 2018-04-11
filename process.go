@@ -178,7 +178,7 @@ func processTag(tagLine reflect.StructTag) (tag, normalName string, err error) {
 		return
 	}
 
-	if strings.Contains(tag, ",") {
+	if strings.ContainsAny(tag, ".,") {
 		err = ErrComaNotSupported
 		return
 	}
