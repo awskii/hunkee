@@ -35,6 +35,11 @@ type TimeOption struct {
 	Location *time.Location
 }
 
+// ParseLine gets line of input and structure to parse in
+func (p *Parser) ParseLine(line string, to interface{}) error {
+	return p.parseLine(line, to)
+}
+
 // SetDebug makes hunkee more verbose
 func (p *Parser) SetDebug(val bool) {
 	p.debug = val
@@ -85,11 +90,6 @@ func (p *Parser) TimeOption(tag string) *TimeOption {
 func (p *Parser) SetCommentPrefix(pref string) {
 	p.mapper.comPrefix = pref
 	p.mapper.prefixActive = true
-}
-
-// ParseLine gets line of input and structure to parse in
-func (p *Parser) ParseLine(line string, to interface{}) error {
-	return p.parseLine(line, to)
 }
 
 func DefaultTimeOptions() *TimeOption {
