@@ -41,7 +41,7 @@ func (p *Parser) SetDebug(val bool) {
 
 // SetTimeLayout setups provided time layout for time.Time
 // fields in log entry. By default it's corresponded to
-// RFC822 (02 Jan 06 15:04 MST)
+// RFC3339 - "2006-01-02T15:04:05Z07:00"
 func (p *Parser) SetTimeLayout(tag, timeLayout string) {
 	p.mapper.fields[tag].timeOptions.Layout = timeLayout
 }
@@ -89,6 +89,6 @@ func (p *Parser) ParseLine(line string, to interface{}) error {
 
 func DefaultTimeOptions() *TimeOption {
 	return &TimeOption{
-		Layout: time.RFC822, // default time layout 02 Jan 06 15:04 MST
+		Layout: time.RFC3339, // default time layout "2006-01-02T15:04:05Z07:00"
 	}
 }
