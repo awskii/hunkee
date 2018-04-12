@@ -11,6 +11,7 @@ import (
 	"github.com/awskii/hunkee"
 )
 
+// Fill tags on your structure
 type Beach struct {
 	ID   uint16    `hunk:"id"`
 	Name string    `hunk:"name"`
@@ -19,18 +20,28 @@ type Beach struct {
 	Time time.Time `hunk:"time"`
 }
 
-var format = ":time :id :name :lo_ac :temp "
+var (
+	// names should match tags in struct
+	format = ":time :id :name :lo_ac :temp "
+
+	filePath = "./my.log"
+)
 
 func main() {
-	var err error
 	bch := new(Beach)
 
+	// Initialize parser with format string and structure
 	parser, err := hunkee.NewParser(format, bch)
 	if err != nil {
 		panic(err)
 	}
 
-	f, err := os.Open(os.Args[1])
+	// let hunkee to know that we await time from log at our format
+	// Tag 'time' tells that field with such tag will be proceeded with
+	// provided time format
+	parser.SetTimeLayout("time", time.RFC822)
+
+	f, err := os.Open(filePath)
 	if err != nil {
 		log.Panic(err)
 	}
@@ -49,6 +60,7 @@ func main() {
 
 		wg.Add(1)
 		go func(line string, result chan *Beach) {
+			// and parse each line into structure
 			var b Beach
 			if err := parser.ParseLine(line, &b); err != nil {
 				log.Println(err)
