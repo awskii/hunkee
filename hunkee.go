@@ -45,9 +45,6 @@ type TimeOption struct {
 // ParseLine gets line of input and structure to parse in
 // Returns ErrEmptyLine if passed empty string or string with only \n
 func (p *Parser) ParseLine(line string, to interface{}) error {
-	if line == "" || line == "\n" {
-		return ErrEmptyLine
-	}
 	return p.parseLine(line, to)
 }
 

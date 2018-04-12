@@ -37,6 +37,10 @@ var (
 
 // parseLine processing one log line into structure
 func (p *Parser) parseLine(line string, dest interface{}) (err error) {
+	if line == "" || line == "\n" {
+		return ErrEmptyLine
+	}
+
 	var (
 		end    int
 		offset int
@@ -74,7 +78,7 @@ func (p *Parser) parseLine(line string, dest interface{}) (err error) {
 		// findNextSpace returns -1 if no other space found
 		// so if no space found - read line from current position
 		// to the end of line, else read all between offset and end
-		if end < offset || end >= len(line) {
+		if end < offset || end >= len(line)-1 {
 			token = line[offset:]
 		} else {
 			token = line[offset:end]
