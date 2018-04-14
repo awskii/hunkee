@@ -118,8 +118,13 @@ Note that all concurrency dispatch is lying on your shoulders.
 
 ## Benchmarks
 ```
-BenchmarkParse-4     	 2000000	       953 ns/op	      32 B/op	       1 allocs/op
-BenchmarkParseRE-4   	  500000	      2482 ns/op	     448 B/op	       6 allocs/op
+goos: linux
+goarch: amd64
+pkg: github.com/awskii/hunkee
+BenchmarkParse-4                	 1000000	      1061 ns/op	      32 B/op	       1 allocs/op
+BenchmarkParseWithoutTime-4     	 5000000	       406 ns/op	       0 B/op	       0 allocs/op
+BenchmarkParseRE-4              	 1000000	      2192 ns/op	     448 B/op	       6 allocs/op
+BenchmarkParseREWithoutTime-4   	 1000000	      1246 ns/op	     256 B/op	       4 allocs/op
 ```
 
 ## Don't be an enemy of yourself
