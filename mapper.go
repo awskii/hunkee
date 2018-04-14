@@ -7,7 +7,6 @@ import (
 	"net"
 	"net/url"
 	"reflect"
-	"sync"
 	"time"
 	"unicode"
 )
@@ -17,7 +16,6 @@ import (
 type mapper struct {
 	// no mutexes because we write to fields and tokenSeq
 	// only once when building up structure
-	mu           sync.RWMutex
 	fields       map[string]*field
 	tokensSeq    []string
 	comPrefix    string // skip line if line has such prefix
@@ -89,6 +87,18 @@ func initMapper(format string, to interface{}) (*mapper, error) {
 	}, nil
 }
 
+func (m *mapper) aquireWorker() *worker {
+	return m.workerPool.get(m)
+}
+
+func (m *mapper) gainWorkers(upTo int) {
+	final := upTo - m.workerPool.size
+	for i := 0; i < final; i++ {
+		m.workerPool.free <- new(worker)
+	}
+	m.workerPool.size = upTo
+}
+
 // raw returns raw field of passed in arg
 func (m *mapper) raw(normal *field) *field {
 	f, ok := m.fields[normal.name+"_raw"]
@@ -99,19 +109,11 @@ func (m *mapper) raw(normal *field) *field {
 }
 
 func (m *mapper) getField(tag string) *field {
-	m.mu.RLock()
-	defer m.mu.RUnlock()
 	return m.fields[tag]
 }
 
 func (m *mapper) writeField(tag string, f *field) {
-	m.mu.Lock()
 	m.fields[tag] = f
-	m.mu.Unlock()
-}
-
-func (m *mapper) aquireWorker() *worker {
-	return &worker{parent: m}
 }
 
 func determineType(v interface{}) (ftype fieldType) {
