@@ -40,6 +40,7 @@ func (p *Parser) parseLine(line string, dest interface{}) (err error) {
 		return
 	}
 
+	destination := reflect.Indirect(reflect.ValueOf(dest))
 	for field := w.first(); field != nil; field = w.next() {
 		var token string
 		// mapper guarantee that all names has fields
@@ -69,7 +70,6 @@ func (p *Parser) parseLine(line string, dest interface{}) (err error) {
 			log.Printf("Token: %q [%d:%d] After: %d TimeOption: %#+v\n", token, offset, end, field.after, field.timeOptions)
 		}
 
-		destination := reflect.Indirect(reflect.ValueOf(dest))
 		if err = p.mapper.processField(field, destination, token); err != nil {
 			return err
 		}
