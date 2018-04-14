@@ -184,7 +184,9 @@ func TestParseStringToStructTime(t *testing.T) {
 	t.Parallel()
 
 	var (
-		f   = new(field)
+		f = &field{
+			ftype: typeTime,
+		}
 		tim time.Time
 	)
 
@@ -231,7 +233,9 @@ func TestParseStringToStructDuration(t *testing.T) {
 	t.Parallel()
 
 	var (
-		f = new(field)
+		f = &field{
+			ftype: typeDuration,
+		}
 		d time.Duration
 	)
 
@@ -262,8 +266,8 @@ func TestParseStringToStructURL(t *testing.T) {
 		u *url.URL
 	)
 
-	if err := parseStringToStruct(reflect.ValueOf(&u), "", f); err == nil {
-		t.Errorf("expected %s, got nil error", "some error")
+	if err := parseStringToStruct(reflect.ValueOf(&u).Elem(), "", f); err != nil {
+		t.Errorf("uneexpected error: %s", err)
 	}
 
 	err := parseStringToStruct(reflect.ValueOf(&u).Elem(), "http://localhost:81/pattern?p1=a&p2=b&p3=c#wow", f)
