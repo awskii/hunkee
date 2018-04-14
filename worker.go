@@ -1,17 +1,25 @@
 package hunkee
 
-import "sync/atomic"
+import (
+	"sync/atomic"
+)
 
 // worker need to safely use any amount of parsers for
 // corresponded format without any memory overhead and races.
 type worker struct {
-	id     uint
-	pos    uint32
+	id  uint
+	pos uint32
+	len uint32
+
 	parent *mapper
 }
 
 func (w *worker) seek(i uint32) *field {
-	if i >= uint32(len(w.parent.tokensSeq)) {
+	if w.len == 0 {
+		w.len = uint32(len(w.parent.tokensSeq))
+	}
+
+	if i >= w.len {
 		return nil
 	}
 
