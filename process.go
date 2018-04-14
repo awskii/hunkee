@@ -151,7 +151,7 @@ func parseStringToStruct(v reflect.Value, token string, field *field) (err error
 		}
 		v.Set(reflect.ValueOf(d))
 	default:
-		return fmt.Errorf("type %s is not supported: ftype: %d name: %s", v.Type(), field.ftype, field.name)
+		return fmt.Errorf("type %s is not supported: ftype: %d name: %s", field.reflectType, field.ftype, field.name)
 	}
 	return nil
 }
