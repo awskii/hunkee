@@ -256,7 +256,9 @@ func TestParseStringToStructURL(t *testing.T) {
 	t.Parallel()
 
 	var (
-		f = new(field)
+		f = &field{
+			ftype: typeURL,
+		}
 		u *url.URL
 	)
 
@@ -466,10 +468,10 @@ func TestProcessFieldIP(t *testing.T) {
 		t.Error(err)
 	}
 	if !s.IP.Equal(net.IPv4(241, 74, 91, 45)) {
-		t.Errorf("net.IP was parsed wrong, expect %s, got %s", ip, s.IP)
+		t.Errorf("net.IP was parsed wrong, expect %q, got %q", ip, s.IP)
 	}
 	if s.IPrawr != ip {
-		t.Errorf("net.IP raw was not stored, expect %s, got %s", ip, s.IP)
+		t.Errorf("net.IP raw was not stored, expect %q, got %q", ip, s.IPrawr)
 	}
 }
 

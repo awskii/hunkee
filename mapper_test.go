@@ -64,8 +64,8 @@ func TestInitMapper(t *testing.T) {
 
 		tef  = ":id :name :added"
 		ef   = ":id :temp :token :ip :nice"
-		nsef = ":id :temp :token :ip :nice :ch :date :dur :explicit_url :ignore_it :fail_with_it"
-		emf  = ":so_what :in_time :starrival :token :ticket_id"
+		nsef = ":id :temp :token :ip :nice :ch :date :dur :explicit_url :fail_with_it"
+		emf  = ":so_what :in_time :arrival :token :ticket_id"
 
 		badWithPoint = ":id :name.name :added"
 	)
@@ -83,8 +83,8 @@ func TestInitMapper(t *testing.T) {
 		t.Fatalf("Unexpected error %s", err)
 	}
 	_, err = initMapper(nsef, &nse)
-	if err != nil {
-		t.Fatal(err)
+	if err == nil {
+		t.Fatal("expected error about absence of filed 'fail_with_it', got nil")
 	}
 	_, err = initMapper(emf, &em)
 	if err == nil {
