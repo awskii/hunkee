@@ -102,6 +102,12 @@ func (p *Parser) SetCommentPrefix(pref string) {
 	p.mapper.prefixActive = true
 }
 
+// SetWorkersAmount increases amount of workers from current value (10 by default)
+// up to provided value
+func (p *Parser) SetWorkersAmount(amount int) {
+	p.mapper.gainWorkers(amount)
+}
+
 func DefaultTimeOptions() *TimeOption {
 	return &TimeOption{
 		Layout: time.RFC3339, // default time layout "2006-01-02T15:04:05Z07:00"

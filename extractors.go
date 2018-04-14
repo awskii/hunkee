@@ -27,6 +27,7 @@ func (p *Parser) parseLine(line string, dest interface{}) (err error) {
 		lineLen = len(line)
 		w       = p.mapper.aquireWorker()
 	)
+	defer w.free()
 
 	if debug {
 		log.Printf("Entry: %q Len: %d\n", line, len(line))

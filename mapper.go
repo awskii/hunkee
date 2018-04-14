@@ -20,6 +20,7 @@ type mapper struct {
 	tokensSeq    []string
 	comPrefix    string // skip line if line has such prefix
 	prefixActive bool   // if false, prefix check will be disabled
+	workerPool   *pool
 }
 
 type fieldType int
@@ -84,6 +85,7 @@ func initMapper(format string, to interface{}) (*mapper, error) {
 
 	return &mapper{
 		fields: fields, tokensSeq: tokenSeq,
+		workerPool: initPool(10),
 	}, nil
 }
 
