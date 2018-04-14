@@ -17,7 +17,8 @@ func (m *mapper) processField(field *field, final reflect.Value, token string) e
 		// Allocate memory
 		v.Set(reflect.New(deref(v.Type())))
 	}
-	switch field.typ.Kind() {
+
+	switch field.reflectKind {
 	case reflect.Bool:
 		b, err := strconv.ParseBool(token)
 		if err != nil {
@@ -25,13 +26,13 @@ func (m *mapper) processField(field *field, final reflect.Value, token string) e
 		}
 		v.SetBool(b)
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-		i64, err := parseInt(field.typ.Kind(), token)
+		i64, err := parseInt(field.reflectKind, token)
 		if err != nil {
 			return err
 		}
 		v.SetInt(i64)
 	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
-		ui64, err := parseUint(field.typ.Kind(), token)
+		ui64, err := parseUint(field.reflectKind, token)
 		if err != nil {
 			return err
 		}
@@ -39,7 +40,7 @@ func (m *mapper) processField(field *field, final reflect.Value, token string) e
 	case reflect.String:
 		v.SetString(token)
 	case reflect.Float32, reflect.Float64:
-		fl64, err := parseFloat(field.typ.Kind(), token)
+		fl64, err := parseFloat(field.reflectKind, token)
 		if err != nil {
 			return err
 		}
@@ -48,15 +49,13 @@ func (m *mapper) processField(field *field, final reflect.Value, token string) e
 		if err := parseStringToStruct(v, token, field); err != nil {
 			return err
 		}
-	case kindByteSlice:
-		// TODO find better way to distinct net.IP type
-		if field.typ.String() != "net.IP" {
-			return fmt.Errorf("type %s is not supported", field.typ.String())
-		}
-		ip := net.ParseIP(token)
-		v.Set(reflect.ValueOf(ip))
 	default:
-		return fmt.Errorf("type %s is not supported", field.typ.String())
+		if field.ftype == typeIP {
+			ip := net.ParseIP(token)
+			v.Set(reflect.ValueOf(ip))
+		} else {
+			return fmt.Errorf("type %s is not supported", field.reflectType.String())
+		}
 	}
 
 	// set raw value
@@ -123,7 +122,7 @@ func parseFloat(kind reflect.Kind, token string) (float64, error) {
 // parseStringToStruct gets token and parses it into
 // net.Addr, time.Time, time.Duration, url.URL
 func parseStringToStruct(v reflect.Value, token string, field *field) (err error) {
-	switch v.Type() {
+	switch field.ftype {
 	case typeTime:
 		var t time.Time
 		if field.timeOptions == nil {
@@ -139,21 +138,20 @@ func parseStringToStruct(v reflect.Value, token string, field *field) (err error
 			return err
 		}
 		v.Set(reflect.ValueOf(t))
+	case typeURL:
+		u, err := url.Parse(token)
+		if err != nil {
+			return err
+		}
+		v.Set(reflect.ValueOf(u))
 	case typeDuration:
 		d, err := time.ParseDuration(token)
 		if err != nil {
 			return err
 		}
 		v.Set(reflect.ValueOf(d))
-	case typeURL, typeURLp:
-		u, err := url.Parse(token)
-		if err != nil {
-			return err
-		}
-		v.Set(reflect.ValueOf(u))
 	default:
-		// return ErrNotSupportedType
-		return fmt.Errorf("type %s is not supported", v.Type())
+		return fmt.Errorf("type %s is not supported: ftype: %d name: %s", v.Type(), field.ftype, field.name)
 	}
 	return nil
 }

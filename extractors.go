@@ -2,11 +2,8 @@ package hunkee
 
 import (
 	"log"
-	"net"
-	"net/url"
 	"reflect"
 	"strings"
-	"time"
 )
 
 const (
@@ -16,23 +13,6 @@ const (
 
 var (
 	debug bool
-
-	_time time.Time
-	_dur  time.Duration
-	_url  url.URL
-	_urlp *url.URL
-	_ip   net.IP
-	_byte byte
-
-	// Pre-defined supported structure types
-	typeTime     = reflect.TypeOf(_time)
-	typeDuration = reflect.TypeOf(_dur)
-	typeURL      = reflect.TypeOf(_url)
-	typeURLp     = reflect.TypeOf(_urlp)
-	typeIP       = reflect.TypeOf(_ip)
-	typeByte     = reflect.TypeOf(_byte)
-
-	kindByteSlice = reflect.SliceOf(typeByte).Kind()
 )
 
 // parseLine processing one log line into structure
@@ -42,9 +22,10 @@ func (p *Parser) parseLine(line string, dest interface{}) (err error) {
 	}
 
 	var (
-		end    int
-		offset int
-		w      = p.mapper.aquireWorker()
+		end     int
+		offset  int
+		lineLen = len(line)
+		w       = p.mapper.aquireWorker()
 	)
 
 	if debug {
@@ -62,14 +43,14 @@ func (p *Parser) parseLine(line string, dest interface{}) (err error) {
 	for field := w.first(); field != nil; field = w.next() {
 		var token string
 		// mapper guarantee that all names has fields
-		if field.typ == typeTime {
+		if field.ftype == typeTime {
 			// if it's time make offset from current offset to the end of value
 			to := p.TimeOption(field.name)
 			if to == nil {
 				panic("not initialized TimeOptions for field " + field.name)
 			}
 			// TODO find other way to distinct end of time value. Issued when using time formats with
-			// unconstant value length like RFC 1123
+			// non-constant value length like RFC 1123
 			end = offset + len(to.Layout)
 		} else {
 			end = findNextSpace(line, offset)
@@ -78,7 +59,7 @@ func (p *Parser) parseLine(line string, dest interface{}) (err error) {
 		// findNextSpace returns -1 if no other space found
 		// so if no space found - read line from current position
 		// to the end of line, else read all between offset and end
-		if end < offset || end >= len(line)-1 {
+		if end < offset || end >= lineLen-1 {
 			token = line[offset:]
 		} else {
 			token = line[offset:end]

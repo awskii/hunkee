@@ -4,8 +4,11 @@ import (
 	"bytes"
 	"fmt"
 	"log"
+	"net"
+	"net/url"
 	"reflect"
 	"sync"
+	"time"
 	"unicode"
 )
 
@@ -21,15 +24,32 @@ type mapper struct {
 	prefixActive bool   // if false, prefix check will be disabled
 }
 
+type fieldType int
+
+const (
+	typeBool fieldType = 1 << iota
+	typeInt
+	typeUint
+	typeFloat
+	typeString
+	typeIP
+	typeDuration
+	typeURL
+	typeTime
+)
+
 // field represents structure field
 type field struct {
-	index       []int
-	typ         reflect.Type // field Go type
-	name        string       // field key
-	hasRaw      bool         // signals that corresponded field has raw field too
-	after       int          // offset after token to the next token
-	position    int          // numeric position of token in format string
-	timeOptions *TimeOption
+	index        []int
+	ftype        fieldType
+	reflectType  reflect.Type // field Go type
+	reflectKind  reflect.Kind
+	reflectValue reflect.Value
+	name         string // field key
+	hasRaw       bool   // signals that corresponded field has raw field too
+	after        int    // offset after token to the next token
+	position     int    // numeric position of token in format string
+	timeOptions  *TimeOption
 }
 
 type namedParameter struct {
@@ -44,7 +64,6 @@ func initMapper(format string, to interface{}) (*mapper, error) {
 	if err != nil {
 		return nil, err
 	}
-
 	fields, err := extractFieldsOnTags(to)
 	if err != nil {
 		return nil, err
@@ -79,7 +98,6 @@ func (m *mapper) raw(normal *field) *field {
 	return f
 }
 
-// assume no any data writes here
 func (m *mapper) getField(tag string) *field {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
@@ -96,7 +114,22 @@ func (m *mapper) aquireWorker() *worker {
 	return &worker{parent: m}
 }
 
-// TODO how to work with slices?
+func determineType(v interface{}) (ftype fieldType) {
+	switch v.(type) {
+	case time.Time:
+		ftype = typeTime
+	case time.Duration:
+		ftype = typeDuration
+	case net.IP:
+		ftype = typeIP
+	case url.URL, *url.URL:
+		ftype = typeURL
+	default:
+		ftype = -1
+	}
+	return
+}
+
 func extractFieldsOnTags(arg interface{}) (map[string]*field, error) {
 	v := reflect.ValueOf(arg)
 
@@ -114,8 +147,10 @@ func extractFieldsOnTags(arg interface{}) (map[string]*field, error) {
 
 	for i := 0; i < v.NumField(); i++ {
 		f := v.Type().Field(i)
+
+		val := v.FieldByIndex(f.Index)
 		// Ignore anonymous and unexported fields
-		if f.Anonymous || !v.CanSet() {
+		if f.Anonymous || !v.CanSet() || !val.CanInterface() {
 			continue
 		}
 
@@ -127,16 +162,19 @@ func extractFieldsOnTags(arg interface{}) (map[string]*field, error) {
 		// Check if field already indexed
 		if _, ok := index[tag]; ok {
 			index[tag].index = f.Index
-			index[tag].typ = f.Type
 		} else {
+			ftype := determineType(val.Interface())
 			index[tag] = &field{
-				index: f.Index,
-				typ:   f.Type,
+				index:        f.Index,
+				ftype:        ftype,
+				reflectValue: val,
+				reflectType:  f.Type,
+				reflectKind:  f.Type.Kind(),
 			}
-		}
 
-		if f.Type == typeTime {
-			index[tag].timeOptions = DefaultTimeOptions()
+			if ftype == typeTime {
+				index[tag].timeOptions = DefaultTimeOptions()
+			}
 		}
 
 		// Set .hasRaw flag to normal (non-raw) tag
