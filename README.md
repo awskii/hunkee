@@ -1,4 +1,9 @@
 # hunkee
+
+[![GoDoc](https://godoc.org/github.com/awskii/hunkee?status.svg)](https://godoc.org/github.com/awskii/hunkee)
+[![Go Report Card](https://goreportcard.com/badge/github.com/awskii/hunkee)](https://goreportcard.com/report/github.com/awskii/hunkee)
+[![License: MIT](https://img.shields.io/github/license/mashape/apistatus.svg)](https://opensource.org/licenses/MIT)
+
 Convenient way to parse logs
 
 All you need to parse log file - add "format stirng" and provide line to parse and structure to parse into.
