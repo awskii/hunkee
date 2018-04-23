@@ -96,6 +96,29 @@ func TestSetMultiplyTimeLayouts(t *testing.T) {
 	}
 }
 
+func TestParseLine(t *testing.T) {
+	var s struct {
+		ID   int    `hunk:"id"`
+		Name string `hunk:"name"`
+	}
+
+	p, err := NewParser(":id :name", &s)
+	if err != nil {
+		t.Error("unexpected error: " + err.Error())
+	}
+
+	if err := p.parseLine("998 Gordon", &s); err != nil {
+		t.Error(err)
+	}
+
+	if s.ID != 998 {
+		t.Errorf("unexpected result of parsing commented string:\nhave: %d\nwant: %d", s.ID, 998)
+	}
+	if s.Name != "Gordon" {
+		t.Errorf("unexpected result of parsing commented string:\nhave: %s\nwant: %s", s.Name, "Gordon")
+	}
+}
+
 func TestParseCommentedLine(t *testing.T) {
 	var s struct {
 		ID   int    `hunk:"id"`
@@ -113,15 +136,28 @@ func TestParseCommentedLine(t *testing.T) {
 	if s.ID != 0 {
 		t.Errorf("unexpected result of parsing commented string:\nhave: %d\nwant: %d", s.ID, 0)
 	}
+}
 
-	if err := p.parseLine("998 Gordon", &s); err != nil {
+func TestParseLineWithEscape(t *testing.T) {
+	var s struct {
+		ID   int    `hunk:"id"`
+		Name string `hunk:"name"`
+	}
+
+	p, err := NewParser(":id :name", &s)
+	if err != nil {
+		t.Error("unexpected error: " + err.Error())
+	}
+	p.mapper.escapeRune = '"'
+
+	if err := p.parseLine(`"998" "Gordon Freeman"`, &s); err != nil {
 		t.Error(err)
 	}
 
 	if s.ID != 998 {
 		t.Errorf("unexpected result of parsing commented string:\nhave: %d\nwant: %d", s.ID, 998)
 	}
-	if s.Name != "Gordon" {
-		t.Errorf("unexpected result of parsing commented string:\nhave: %s\nwant: %s", s.Name, "Gordon")
+	if s.Name != "Gordon Freeman" {
+		t.Errorf("unexpected result of parsing commented string:\nhave: %s\nwant: %s", s.Name, "Gordon Freeman")
 	}
 }

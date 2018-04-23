@@ -54,6 +54,13 @@ func (p *Parser) SetDebug(val bool) {
 	debug = val
 }
 
+// SetEscapeRune sets rune on which tokens will be splitted.
+// E.g. `"this" "is sparta"`, with rune '"' will be splitted on
+// [this] and [is sparta].
+func (p *Parser) SetEscapeRune(r rune) {
+	p.mapper.escapeRune = r
+}
+
 // SetTimeLayout setups provided time layout for time.Time
 // fields in log entry. By default it's corresponded to
 // RFC3339 - "2006-01-02T15:04:05Z07:00"

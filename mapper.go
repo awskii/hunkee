@@ -18,6 +18,7 @@ type mapper struct {
 	// only once when building up structure
 	fields       map[string]*field
 	tokensSeq    []string
+	escapeRune   rune
 	comPrefix    string // skip line if line has such prefix
 	prefixActive bool   // if false, prefix check will be disabled
 	workerPool   *pool

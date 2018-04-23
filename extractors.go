@@ -26,7 +26,11 @@ func (p *Parser) parseLine(line string, dest interface{}) (err error) {
 		offset  int
 		lineLen = len(line)
 		w       = p.mapper.aquireWorker()
+
+		escRune     = w.parent.escapeRune
+		destination = reflect.Indirect(reflect.ValueOf(dest))
 	)
+
 	defer w.free()
 
 	if debug {
@@ -41,7 +45,25 @@ func (p *Parser) parseLine(line string, dest interface{}) (err error) {
 		return
 	}
 
-	destination := reflect.Indirect(reflect.ValueOf(dest))
+	if escRune != 0 {
+		tt := strings.Split(line, string(escRune))
+		tokens := make([]string, 0, len(tt))
+		for i := 0; i < len(tt); i++ {
+			t := strings.Replace(tt[i], " ", "", -1)
+			if t != "" {
+				tokens = append(tokens, tt[i])
+			}
+		}
+
+		for field, i := w.first(), 0; field != nil && i < len(tokens); field = w.next() {
+			if err = p.mapper.processField(field, destination, tokens[i]); err != nil {
+				return err
+			}
+			i++
+		}
+		return
+	}
+
 	for field := w.first(); field != nil; field = w.next() {
 		var token string
 		// mapper guarantee that all names has fields
