@@ -25,7 +25,7 @@ func TestSetTimeLayout(t *testing.T) {
 
 	p, err := NewParser(":t", &s)
 	if err != nil {
-		t.Error("unexpected init error " + err.Error())
+		t.Error("init error " + err.Error())
 	}
 
 	p.SetTimeLayout("t", time.Kitchen)

@@ -61,7 +61,7 @@ func (p *Parser) SetTimeLayout(tag, timeLayout string) {
 	p.mapper.fields[tag].timeOptions.Layout = timeLayout
 }
 
-// SetMultiplyTimeLayout recieves map of TAG -> LAYOUT and sets up
+// SetMultiplyTimeLayout receives map of TAG -> LAYOUT and sets up
 // proposed layouts for different fields by their tag.
 func (p *Parser) SetMultiplyTimeLayout(tagToLayouts map[string]string) {
 	for tag, layout := range tagToLayouts {
@@ -94,7 +94,7 @@ func (p *Parser) TimeOption(tag string) *TimeOption {
 	return nil
 }
 
-// SetCommentPrefix recieves prefix which from will be start commented lines.
+// SetCommentPrefix receives prefix which from will be start commented lines.
 // As soon parser will get string with such prefix, that line will be ignored.
 // Default commentary prefix is '#'.
 func (p *Parser) SetCommentPrefix(pref string) {

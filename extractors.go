@@ -11,9 +11,7 @@ const (
 	libtag        = "hunk"
 )
 
-var (
-	debug bool
-)
+var debug bool
 
 // parseLine processing one log line into structure
 func (p *Parser) parseLine(line string, dest interface{}) (err error) {
@@ -68,7 +66,7 @@ func (p *Parser) parseLine(line string, dest interface{}) (err error) {
 		}
 
 		if debug {
-			log.Printf("Token: %q [%d:%d] After: %d TimeOption: %#+v\n", token, offset, end, field.after, field.timeOptions)
+			log.Printf("Token: %q [%d:%d] TimeOption: %#+v\n", token, offset, end, field.timeOptions)
 		}
 
 		if err = p.mapper.processField(field, destination, token); err != nil {

@@ -243,7 +243,8 @@ func extractNames(format string) ([]*namedParameter, error) {
 			}
 
 			if !bytes.ContainsAny(s[i:i+1], valid) && s[i] != '\n' {
-				return nil, fmt.Errorf("%q - unsupported symbol %q in format string at pos %d", s, s[i], i)
+				return nil,
+					fmt.Errorf("'%s': unsupported symbol %q in format string at pos %d", s, s[i], i)
 			}
 
 			// last symbol
@@ -262,7 +263,7 @@ func extractNames(format string) ([]*namedParameter, error) {
 	}
 
 	if debug {
-		log.Println("format string has been succesfully parsed")
+		log.Println("format string has been successfully parsed")
 	}
 	return names, nil
 }
