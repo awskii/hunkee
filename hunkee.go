@@ -108,6 +108,17 @@ func (p *Parser) SetWorkersAmount(amount int) {
 	p.mapper.gainWorkers(amount)
 }
 
+// SetTokenSeparator receives byte which will be before token and right after it
+// (useful when some fields contains more than one word).
+// E.g. provided line:
+//
+// '"user" "123" "hunkee is slow"' with the next format line:
+// ':name :id :description'
+// The token separator here is '"'.
+func (p *Parser) SetTokenSeparator(sep byte) {
+	p.mapper.tokenSep = sep
+}
+
 func DefaultTimeOptions() *TimeOption {
 	return &TimeOption{
 		Layout: time.RFC3339, // default time layout "2006-01-02T15:04:05Z07:00"

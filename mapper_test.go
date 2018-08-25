@@ -100,7 +100,7 @@ func TestExtractNames(t *testing.T) {
 	b := ":so_what :in_time :starrival :token :ticket_id"
 	// c := `":id" ":temp" ":token" ":ip" ":nice" ":ch" ":date" ":dur" ":explicit_url" ":ignore_it" ":fail_with_it"`
 
-	// invalid foramts
+	// invalid formats
 	ia := ":id :temp :token :ip :nice :en:e"
 	ib := ":id :temp.far :token :ip :nice :en:e"
 	ic := ":so-what :ticket-id"
@@ -116,16 +116,6 @@ func TestExtractNames(t *testing.T) {
 		t.Fatalf("%q - wrong length or extracted names: %d elements instead of %d", a, len(p), la)
 	}
 
-	for i := 0; i < len(p)-1; i++ {
-		if p[i].offset != 1 {
-			t.Fatalf("for case 'A' expected every offset to be equal 1, have %d", p[i].offset)
-		}
-	}
-
-	if p[la-1].offset != 0 {
-		t.Fatalf("for case 'A' expected latest offset to be equal 0, have %d", p[la-1].offset)
-	}
-
 	// case B
 	p, err = extractNames(b)
 	if err != nil {
@@ -136,32 +126,6 @@ func TestExtractNames(t *testing.T) {
 	if len(p) != lb {
 		t.Fatalf("wrong length or extracted names: %d elements instead of %d", len(p), lb)
 	}
-
-	for i := 0; i < len(p)-1; i++ {
-		if p[i].offset != 1 {
-			t.Fatalf("for case 'B' expected every offset to be equal 0, have %d", p[i].offset)
-		}
-	}
-	if p[lb-1].offset != 0 {
-		t.Fatalf("for case 'B' expected latest offset to be equal 0, have %d", p[lb-1].offset)
-	}
-
-	// case C -- not implemented
-	//  p, err = extractNames(c)
-	// if err != nil {
-	// t.Fatalf("unexpected error: %s", err)
-	// }
-
-	// lc := 11
-	// if len(p) != lc {
-	// t.Fatalf("%q - wrong length or extracted names: %d elements instead of %d", c, len(p), lc)
-	// }
-	// for i := 0; i < len(p)-1; i++ {
-	// fmt.Println(p[i].name)
-	// if p[i].offset != 1 {
-	// t.Fatalf("for case 'B' expected every offset to be equal 0, have %d", p[i].offset)
-	// }
-	//  }
 
 	// case IA (invalid A)
 	expErr := "unexpected"

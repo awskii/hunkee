@@ -78,7 +78,8 @@ func TestSetMultiplyTimeLayouts(t *testing.T) {
 	}
 
 	p.SetMultiplyTimeLayout(layouts)
-	str := fmt.Sprintf("%s %s %s %s %s", v["a"], v["b"], v["d"], v["e"], v["c"])
+	p.SetTokenSeparator('"')
+	str := fmt.Sprintf("\"%s\" \"%s\" \"%s\" \"%s\" \"%s\"", v["a"], v["b"], v["d"], v["e"], v["c"])
 	if err := p.ParseLine(str, &s); err != nil {
 		t.Error(err)
 	}
@@ -93,6 +94,29 @@ func TestSetMultiplyTimeLayouts(t *testing.T) {
 
 	if s.D.Hour() != 17 || s.D.Minute() != 43 {
 		t.Errorf("wrong parsed time with options:\nhave: %q\nwant: %q", s.D.String(), v["d"])
+	}
+}
+
+func TestParseLine(t *testing.T) {
+	var s struct {
+		ID   int    `hunk:"id"`
+		Name string `hunk:"name"`
+	}
+
+	p, err := NewParser(":id :name", &s)
+	if err != nil {
+		t.Error("unexpected error: " + err.Error())
+	}
+
+	if err := p.parseLine("998 Gordon", &s); err != nil {
+		t.Error(err)
+	}
+
+	if s.ID != 998 {
+		t.Errorf("unexpected result of parsing commented string:\nhave: %d\nwant: %d", s.ID, 998)
+	}
+	if s.Name != "Gordon" {
+		t.Errorf("unexpected result of parsing commented string:\nhave: %s\nwant: %s", s.Name, "Gordon")
 	}
 }
 
@@ -113,15 +137,28 @@ func TestParseCommentedLine(t *testing.T) {
 	if s.ID != 0 {
 		t.Errorf("unexpected result of parsing commented string:\nhave: %d\nwant: %d", s.ID, 0)
 	}
+}
 
-	if err := p.parseLine("998 Gordon", &s); err != nil {
+func TestParseLineWithEscape(t *testing.T) {
+	var s struct {
+		ID   int    `hunk:"id"`
+		Name string `hunk:"name"`
+	}
+
+	p, err := NewParser(":id :name", &s)
+	if err != nil {
+		t.Error("unexpected error: " + err.Error())
+	}
+
+	p.SetTokenSeparator('"')
+	if err := p.parseLine(`"998" "Gordon Freeman"`, &s); err != nil {
 		t.Error(err)
 	}
 
 	if s.ID != 998 {
 		t.Errorf("unexpected result of parsing commented string:\nhave: %d\nwant: %d", s.ID, 998)
 	}
-	if s.Name != "Gordon" {
-		t.Errorf("unexpected result of parsing commented string:\nhave: %s\nwant: %s", s.Name, "Gordon")
+	if s.Name != "Gordon Freeman" {
+		t.Errorf("unexpected result of parsing commented string:\nhave: %s\nwant: %s", s.Name, "Gordon Freeman")
 	}
 }

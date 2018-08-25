@@ -1,6 +1,7 @@
 package hunkee
 
 import (
+	"errors"
 	"log"
 	"reflect"
 	"strings"
@@ -20,11 +21,11 @@ func (p *Parser) parseLine(line string, dest interface{}) (err error) {
 	}
 
 	var (
-		end     int
 		offset  int
 		lineLen = len(line)
 		w       = p.mapper.aquireWorker()
 	)
+
 	defer w.free()
 
 	if debug {
@@ -42,19 +43,16 @@ func (p *Parser) parseLine(line string, dest interface{}) (err error) {
 	destination := reflect.Indirect(reflect.ValueOf(dest))
 	for field := w.first(); field != nil; field = w.next() {
 		var token string
-		// mapper guarantee that all names has fields
-		if field.ftype == typeTime {
-			// if it's time make offset from current offset to the end of value
-			to := p.TimeOption(field.name)
-			if to == nil {
-				panic("not initialized TimeOptions for field " + field.name)
+
+		start := offset
+		// if token separator is 0, no need to search first occurrence
+		if p.mapper.tokenSep != 0 {
+			start = findNextSep(line, offset, p.mapper.tokenSep)
+			if start < 0 {
+				return errors.New("provided line has less tokens than expected")
 			}
-			// TODO find other way to distinct end of time value. Issued when using time formats with
-			// non-constant value length like RFC 1123
-			end = offset + len(to.Layout)
-		} else {
-			end = findNextSpace(line, offset)
 		}
+		end := findNextSep(line, start, p.mapper.tokenSep)
 
 		// findNextSpace returns -1 if no other space found
 		// so if no space found - read line from current position
@@ -64,6 +62,12 @@ func (p *Parser) parseLine(line string, dest interface{}) (err error) {
 		} else {
 			token = line[offset:end]
 		}
+		if field.ftype == typeIgnored {
+			offset = end
+			continue
+		}
+
+		token = strings.Trim(strings.TrimSpace(token), string(p.mapper.tokenSep))
 
 		if debug {
 			log.Printf("Token: %q [%d:%d] TimeOption: %#+v\n", token, offset, end, field.timeOptions)
@@ -73,19 +77,22 @@ func (p *Parser) parseLine(line string, dest interface{}) (err error) {
 			return err
 		}
 
-		// update current offset
-		offset = end + field.after
+		offset = end
 	}
 	return
 }
 
-func findNextSpace(line string, start int) int {
+// if provided sep is empty, space lookup will be used instead
+func findNextSep(line string, start int, sep byte) int {
 	if start >= len(line) {
 		return -1
 	}
+	if sep == 0 {
+		sep = ' '
+	}
 
 	for i := start + 1; i < len(line); i++ {
-		if line[i] == ' ' || line[i] == '\n' {
+		if line[i] == sep || line[i] == '\n' {
 			return i
 		}
 	}
