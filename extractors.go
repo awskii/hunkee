@@ -70,7 +70,8 @@ func (p *Parser) parseLine(line string, dest interface{}) (err error) {
 		token = strings.Trim(strings.TrimSpace(token), string(p.mapper.tokenSep))
 
 		if debug {
-			log.Printf("Token: %q [%d:%d] TimeOption: %#+v\n", token, offset, end, field.timeOptions)
+			log.Printf("Field: %q Token: %q Pos:[%d:%d] HasRaw: %t TimeOption: %#+v\n",
+				field.name, token, offset, end, field.hasRaw, field.timeOptions)
 		}
 
 		if err = p.mapper.processField(field, destination, token); err != nil {

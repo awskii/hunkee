@@ -71,7 +71,7 @@ func (m *mapper) processField(field *field, final reflect.Value, token string) e
 			ip := net.ParseIP(token)
 			v.Set(reflect.ValueOf(ip))
 		} else {
-			return fmt.Errorf("type %s is not supported", field.reflectType.String())
+			return fmt.Errorf("type %+v is not supported", field)
 		}
 	}
 
