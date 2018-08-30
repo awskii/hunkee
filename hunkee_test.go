@@ -2,6 +2,7 @@ package hunkee
 
 import (
 	"fmt"
+	"net"
 	"testing"
 	"time"
 )
@@ -161,4 +162,119 @@ func TestParseLineWithEscape(t *testing.T) {
 	if s.Name != "Gordon Freeman" {
 		t.Errorf("unexpected result of parsing commented string:\nhave: %s\nwant: %s", s.Name, "Gordon Freeman")
 	}
+}
+
+func TestParseLineReal(t *testing.T) {
+	var s struct {
+		ParsedAtTimestamp          time.Time `hunk:"date"`
+		RemoteUser                 string    `hunk:"remote_user"`
+		RemoteIP                   net.IP    `hunk:"remote_addr"`
+		RemoteIPRaw                string    `hunk:"remote_addr_raw"`
+		GeoIPCountryCode           string    `hunk:"geoip_country_code"`
+		GeoIPCity                  string    `hunk:"geoip_city"`
+		GcdnTimetamp               time.Time `hunk:"time_local"`
+		GcdnResponderName          string    `hunk:"responder_name"`
+		GcdnAPIClientID            uint64    `hunk:"gcdn_api_client_id"`
+		GcdnResourceID             int64     `hunk:"gcdn_api_resource_id"`
+		RQHeaderHost               string    `hunk:"host"`
+		RQHeaderUserAgent          string    `hunk:"http_user_agent"`
+		RQLength                   int64     `hunk:"request_length"`
+		Size                       uint64    `hunk:"body_bytes_sent"`
+		HTTPRequestRaw             string    `hunk:"request"`
+		HTTPStatus                 int       `hunk:"status"`
+		HTTPReferer                string    `hunk:"http_referer"`
+		HTTPScheme                 string    `hunk:"scheme"`
+		HTTPRangeRaw               string    `hunk:"http_range"`
+		ServerToClientBytesSent    uint64    `hunk:"bytes_sent"`
+		ServerToClientBytesSentRaw string    `hunk:"bytes_sent_raw"`
+		SentHTTPContentSize        uint64    `hunk:"sent_http_content_size"`
+		SentHTTPContentSizeRaw     string    `hunk:"sent_http_content_size_raw"`
+		UpstreamResponseTimeRaw    string    `hunk:"upstream_response_time"`
+		UpstreamResponseLengthRaw  string    `hunk:"upstream_response_length"`
+		CacheStatus                string    `hunk:"upstream_cache_status"`
+		ProcessingTime             float64   `hunk:"request_time"`
+		UpstreamIPRaw              string    `hunk:"upstream_addr"`
+		UIDCookieGot               string    `hunk:"uid_got"`
+		UIDCookieSet               string    `hunk:"uid_set"`
+		ShieldUsedRaw              string    `hunk:"shield_type"`
+	}
+	f := `:remote_addr - :remote_user :time_local :request :status ` +
+		`:body_bytes_sent :http_referer :http_user_agent :bytes_sent :sent_http_content_size ` +
+		`:scheme :host :request_time :upstream_response_time :request_length :http_range ` +
+		`:responder_name :upstream_cache_status :upstream_response_length :upstream_addr ` +
+		`:gcdn_api_client_id :gcdn_api_resource_id :uid_got :uid_set :geoip_country_code ` +
+		`:geoip_city :shield_type`
+
+	l := `"62.149.10.131" "-" "-" "[04/Jan/2018:19:15:39 +0000]" "GET /dino.jpg HTTP/1.1" "200" "207402" "" "saelmon" "207957" "-" "https" "di.gcdn.co" "0.000" "-" "88" "-" "[gn]" "HIT" "-" "-" "777" "1337" "-" "-" "UA" "-" "shield_no"`
+
+	p, err := NewParser(f, &s)
+	if err != nil {
+		t.Errorf("unexpected error: :%s", err)
+	}
+
+	p.SetTokenSeparator('"')
+	p.SetTimeLayout("time_local", "[02/Jan/2006:15:04:05 -0700]")
+
+	if err = p.ParseLine(l, &s); err != nil {
+		t.Error(err)
+	}
+	if !s.RemoteIP.Equal(net.IPv4(62, 149, 10, 131)) {
+		t.Error("reomte_addr did not parsed properly")
+	}
+	if s.RemoteIPRaw != "62.149.10.131" {
+		t.Error("reomte_addr_raw did not init with proper value")
+	}
+	if s.GcdnTimetamp.IsZero() {
+		t.Error("time_local was not parsed properly")
+	}
+	if s.HTTPRequestRaw != "GET /dino.jpg HTTP/1.1" {
+		t.Errorf("request was not parsed properly: %q != %q",
+			s.HTTPRequestRaw, "GET /dino.jpg HTTP/1.1")
+	}
+	if s.HTTPStatus != 200 {
+		t.Errorf("status was not parsed properly: %d != %d", s.HTTPStatus, 200)
+	}
+	if s.Size != 207402 {
+		t.Errorf("bytes_sent was not parsed properly: %d != %d", s.Size, 207402)
+	}
+	if s.RQHeaderUserAgent != "saelmon" {
+		t.Errorf("user_agent was not parsed properly: %q != %q",
+			s.RQHeaderUserAgent, "salemon")
+	}
+	if s.ServerToClientBytesSent != 207957 {
+		t.Errorf("bytes_sent was not parsed properly: %q != %q",
+			s.ServerToClientBytesSent, 207957)
+	}
+	if s.ServerToClientBytesSentRaw != "207957" {
+		t.Errorf("bytes_sent_raw was not set properly: %q != %q",
+			s.ServerToClientBytesSentRaw, "207957")
+	}
+	if s.HTTPScheme != "https" {
+		t.Errorf("scheme was not parsed properly: %q != %q", s.HTTPScheme, "https")
+	}
+	if s.RQHeaderHost != "di.gcdn.co" {
+		t.Errorf("host was not parsed properly: %q != %q", s.HTTPScheme, "di.gcdn.co")
+	}
+	if s.RQLength != 88 {
+		t.Errorf("request_length was not parsed properly: %d != %d", s.RQLength, 88)
+	}
+	if s.GcdnResponderName != "[gn]" {
+		t.Errorf("responder_name was not parsed properly: %s != %s", s.GcdnResponderName, "[gn]")
+	}
+	if s.CacheStatus != "HIT" {
+		t.Errorf("cache_status was not parsed properly: %s != %s", s.CacheStatus, "HIT")
+	}
+	if s.GcdnAPIClientID != 777 {
+		t.Errorf("gcdn_api_client_id was not parsed properly: %d != %d", s.GcdnAPIClientID, 777)
+	}
+	if s.GcdnResourceID != 1337 {
+		t.Errorf("gcdn_api_resource_id was not parsed properly: %d != %d", s.GcdnResourceID, 1337)
+	}
+	if s.GeoIPCountryCode != "UA" {
+		t.Errorf("geoip_country_code was not parsed properly: %q != %q", s.GeoIPCountryCode, "UA")
+	}
+	if s.ShieldUsedRaw != "shield_no" {
+		t.Errorf("shield_type was not parsed properly: %q != %q", s.ShieldUsedRaw, "shield_no")
+	}
+
 }

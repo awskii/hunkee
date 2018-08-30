@@ -180,7 +180,7 @@ func processTag(tagLine reflect.StructTag) (tag, normalName string, err error) {
 	}
 
 	if strings.HasSuffix(tag, "_raw") {
-		normalName = strings.TrimRight(tag, "_raw")
+		normalName = strings.TrimSuffix(tag, "_raw")
 	}
 
 	return
