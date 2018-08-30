@@ -54,6 +54,10 @@ func TestInitMapper(t *testing.T) {
 				TicketID uint64    `hunk:"ticket_id"`
 			} `hunk:"st"`
 		}
+		raw struct {
+			Size    uint64 `hunk:"size"`
+			SizeRaw string `hunk:"size_raw"`
+		}
 	)
 
 	var (
@@ -61,11 +65,13 @@ func TestInitMapper(t *testing.T) {
 		e   easy
 		nse notSoEasy
 		em  embed
+		r   raw
 
 		tef  = ":id :name :added"
 		ef   = ":id :temp :token :ip :nice"
 		nsef = ":id :temp :token :ip :nice :ch :date :dur :explicit_url :fail_with_it"
 		emf  = ":so_what :in_time :arrival :token :ticket_id"
+		rawf = ":size"
 
 		badWithPoint = ":id :name.name :added"
 	)
@@ -89,6 +95,10 @@ func TestInitMapper(t *testing.T) {
 	_, err = initMapper(emf, &em)
 	if err == nil {
 		t.Fatalf("Unexpected successfull finish of maper initialization")
+	}
+	_, err = initMapper(rawf, &r)
+	if err != nil {
+		t.Fatalf("unexpected error %s", err)
 	}
 }
 

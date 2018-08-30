@@ -321,15 +321,17 @@ func TestProcessFieldUint(t *testing.T) {
 	t.Parallel()
 
 	type st struct {
-		Ui uint64 `hunk:"ui"`
-		I  int64  `hunk:"i"`
-		Ir string `hunk:"i_raw"`
-		B  bool   `hunk:"b"`
-		S  string `hunk:"s"`
+		Ui  uint64 `hunk:"ui"`
+		Uir string `hunk:"ui_raw"`
+		I   int64  `hunk:"i"`
+		Ir  string `hunk:"i_raw"`
+		B   bool   `hunk:"b"`
+		S   string `hunk:"s"`
 	}
 	s := new(st)
+	format := ":ui :i :b :s"
 
-	m, err := initMapper(":ui :i :b :s", s)
+	m, err := initMapper(format, s)
 	if err != nil {
 		t.Error(err)
 	}
@@ -346,6 +348,13 @@ func TestProcessFieldUint(t *testing.T) {
 	err = m.processField(m.getField("ui"), reflect.Indirect(reflect.ValueOf(s)), "-1")
 	if err == nil {
 		t.Error("expected parsing error while parse bad uint64 value, got nil")
+	}
+	p, err := NewParser(format, s)
+	if err != nil {
+		t.Error(err)
+	}
+	if err := p.ParseLine("2131423411234 100 true zazgigin", s); err != nil {
+		t.Error(err)
 	}
 }
 
