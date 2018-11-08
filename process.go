@@ -27,27 +27,27 @@ func (m *mapper) processField(field *field, final reflect.Value, token string) e
 		v.SetBool(b)
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 		i64, err := parseInt(field.reflectKind, token)
-		if err != nil {
-			return err
+		if err != nil && token != "" {
+			return fmt.Errorf("field: %s parse: %s", field.name, err)
 		}
 		v.SetInt(i64)
 	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
 		ui64, err := parseUint(field.reflectKind, token)
-		if err != nil {
-			return err
+		if err != nil && token != "" {
+			return fmt.Errorf("field: %s parse: %s", field.name, err)
 		}
 		v.SetUint(ui64)
 	case reflect.String:
 		v.SetString(token)
 	case reflect.Float32, reflect.Float64:
 		fl64, err := parseFloat(field.reflectKind, token)
-		if err != nil {
-			return err
+		if err != nil && token != "" {
+			return fmt.Errorf("field: %s parse: %s", field.name, err)
 		}
 		v.SetFloat(fl64)
 	case reflect.Struct:
 		if err := parseStringToStruct(v, token, field); err != nil {
-			return err
+			return fmt.Errorf("field: %s parse: %s", field.name, err)
 		}
 	default:
 		if field.ftype == typeIP {
