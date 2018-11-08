@@ -18,6 +18,23 @@ func (m *mapper) processField(field *field, final reflect.Value, token string) e
 		v.Set(reflect.New(deref(v.Type())))
 	}
 
+	// set raw value
+	if field.hasRaw {
+		raw := m.raw(field)
+		if raw == nil {
+			panic(fmt.Sprintf("%s field should have raw field, but it's not provided", field.name))
+		}
+		final.Field(raw.index[0]).Set(reflect.ValueOf(token))
+	}
+
+	// nothing to process, but if it's string, we should set token to the field
+	if token == "-" {
+		if field.reflectKind == reflect.String {
+			v.SetString(token)
+		}
+		return nil
+	}
+
 	switch field.reflectKind {
 	case reflect.Bool:
 		b, err := strconv.ParseBool(token)
@@ -54,18 +71,10 @@ func (m *mapper) processField(field *field, final reflect.Value, token string) e
 			ip := net.ParseIP(token)
 			v.Set(reflect.ValueOf(ip))
 		} else {
-			return fmt.Errorf("type %s is not supported", field.reflectType.String())
+			return fmt.Errorf("type %+v is not supported", field)
 		}
 	}
 
-	// set raw value
-	if field.hasRaw {
-		if raw := m.raw(field); raw == nil {
-			panic(fmt.Sprintf("%s field should have raw field, but there are no such field", field.name))
-		} else {
-			final.Field(raw.index[0]).Set(reflect.ValueOf(token))
-		}
-	}
 	return nil
 }
 
@@ -171,7 +180,7 @@ func processTag(tagLine reflect.StructTag) (tag, normalName string, err error) {
 	}
 
 	if strings.HasSuffix(tag, "_raw") {
-		normalName = strings.TrimRight(tag, "_raw")
+		normalName = strings.TrimSuffix(tag, "_raw")
 	}
 
 	return

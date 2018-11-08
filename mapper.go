@@ -18,7 +18,7 @@ type mapper struct {
 	// only once when building up structure
 	fields       map[string]*field
 	tokensSeq    []string
-	escapeRune   rune
+	tokenSep     byte   // byte which stead before and right after each token
 	comPrefix    string // skip line if line has such prefix
 	prefixActive bool   // if false, prefix check will be disabled
 	workerPool   *pool
@@ -27,7 +27,8 @@ type mapper struct {
 type fieldType int
 
 const (
-	typeBool fieldType = 1 << iota
+	typeIgnored fieldType = 1 << iota
+	typeBool
 	typeInt
 	typeUint
 	typeFloat
@@ -47,15 +48,13 @@ type field struct {
 	reflectValue reflect.Value
 	name         string // field key
 	hasRaw       bool   // signals that corresponded field has raw field too
-	after        int    // offset after token to the next token
 	position     int    // numeric position of token in format string
 	timeOptions  *TimeOption
 }
 
 type namedParameter struct {
-	name   string // entry name without ':' (== tag)
-	strPos int    // numeric position in format
-	offset int    // count of symols after entry to next entry
+	name   string // entry name without ':' (tag)
+	strPos int    // numeric position in format string
 }
 
 func initMapper(format string, to interface{}) (*mapper, error) {
@@ -72,6 +71,9 @@ func initMapper(format string, to interface{}) (*mapper, error) {
 	tokenSeq := make([]string, len(tokens))
 	for i := 0; i < len(tokens); i++ {
 		tokenSeq[i] = tokens[i].name
+		if tokenSeq[i] == "-" {
+			fields["-"] = &field{ftype: typeIgnored}
+		}
 
 		if _, ok := fields[tokens[i].name]; !ok {
 			return nil, fmt.Errorf("passed struct has no field with tag %q", tokens[i].name)
@@ -79,13 +81,13 @@ func initMapper(format string, to interface{}) (*mapper, error) {
 		if i != tokens[i].strPos {
 			panic("i != tokens[i].strPos")
 		}
-		fields[tokens[i].name].after = tokens[i].offset
 		fields[tokens[i].name].position = tokens[i].strPos
 		fields[tokens[i].name].name = tokens[i].name
 	}
 
 	return &mapper{
-		fields: fields, tokensSeq: tokenSeq,
+		fields:     fields,
+		tokensSeq:  tokenSeq,
 		workerPool: initPool(10),
 	}, nil
 }
@@ -201,23 +203,22 @@ func extractNames(format string) ([]*namedParameter, error) {
 
 		s      = []byte(format)
 		pos    int
-		offt   int
 		inName bool
 		name   string
 	)
 
 	for i := 0; i < len(s); i++ {
 		if !inName {
-			if s[i] == ':' {
+			switch s[i] {
+			case ':':
 				inName = true
-				if len(names) != 0 {
-					names[len(names)-1].offset = offt
-					offt = 0
-				}
-				continue
+			case '-': // ignore field
+				names = append(names, &namedParameter{
+					name: "-", strPos: pos,
+				})
+				name = ""
+				pos++
 			}
-			// just another not interesting symbol
-			offt++
 			continue
 		}
 
@@ -239,12 +240,12 @@ func extractNames(format string) ([]*namedParameter, error) {
 				inName = false
 				name = ""
 				pos++
-				offt++
 				continue
 			}
 
 			if !bytes.ContainsAny(s[i:i+1], valid) && s[i] != '\n' {
-				return nil, fmt.Errorf("%q - unsupported symbol %q in format string at pos %d", s, s[i], i)
+				return nil,
+					fmt.Errorf("'%s': unsupported symbol %q in format string at pos %d", s, s[i], i)
 			}
 
 			// last symbol
@@ -263,7 +264,7 @@ func extractNames(format string) ([]*namedParameter, error) {
 	}
 
 	if debug {
-		log.Println("format string has been succesfully parsed")
+		log.Println("format string has been successfully parsed")
 	}
 	return names, nil
 }

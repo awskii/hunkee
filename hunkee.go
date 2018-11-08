@@ -54,13 +54,6 @@ func (p *Parser) SetDebug(val bool) {
 	debug = val
 }
 
-// SetEscapeRune sets rune on which tokens will be splitted.
-// E.g. `"this" "is sparta"`, with rune '"' will be splitted on
-// [this] and [is sparta].
-func (p *Parser) SetEscapeRune(r rune) {
-	p.mapper.escapeRune = r
-}
-
 // SetTimeLayout setups provided time layout for time.Time
 // fields in log entry. By default it's corresponded to
 // RFC3339 - "2006-01-02T15:04:05Z07:00"
@@ -68,7 +61,7 @@ func (p *Parser) SetTimeLayout(tag, timeLayout string) {
 	p.mapper.fields[tag].timeOptions.Layout = timeLayout
 }
 
-// SetMultiplyTimeLayout recieves map of TAG -> LAYOUT and sets up
+// SetMultiplyTimeLayout receives map of TAG -> LAYOUT and sets up
 // proposed layouts for different fields by their tag.
 func (p *Parser) SetMultiplyTimeLayout(tagToLayouts map[string]string) {
 	for tag, layout := range tagToLayouts {
@@ -101,7 +94,7 @@ func (p *Parser) TimeOption(tag string) *TimeOption {
 	return nil
 }
 
-// SetCommentPrefix recieves prefix which from will be start commented lines.
+// SetCommentPrefix receives prefix which from will be start commented lines.
 // As soon parser will get string with such prefix, that line will be ignored.
 // Default commentary prefix is '#'.
 func (p *Parser) SetCommentPrefix(pref string) {
@@ -113,6 +106,17 @@ func (p *Parser) SetCommentPrefix(pref string) {
 // up to provided value
 func (p *Parser) SetWorkersAmount(amount int) {
 	p.mapper.gainWorkers(amount)
+}
+
+// SetTokenSeparator receives byte which will be before token and right after it
+// (useful when some fields contains more than one word).
+// E.g. provided line:
+//
+// '"user" "123" "hunkee is slow"' with the next format line:
+// ':name :id :description'
+// The token separator here is '"'.
+func (p *Parser) SetTokenSeparator(sep byte) {
+	p.mapper.tokenSep = sep
 }
 
 func DefaultTimeOptions() *TimeOption {
