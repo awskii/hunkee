@@ -12,7 +12,7 @@ You can specify raw field, which will be filled with raw value (string) of token
 Simple:
 ```go
 type s struct {
-  ID    int64  `hunk:"id"`
+  ID     int64  `hunk:"id"`
   IDRaw string `hunk:"id_raw"`
 }
 ```
@@ -35,67 +35,67 @@ Note that dots in tags are not supported. Embedded structs are not supported too
 ## Usage
 Take a glance on that example (same at example/main.go):
 ```go
-	// define your structure with needed field. Notice that you can set *_raw fields, which will be
-	// filled by raw value
-	var s struct {
-		ParsedAtTimestamp          time.Time `hunk:"date"`
-		RemoteUser                 string    `hunk:"remote_user"`
-		RemoteIP                   net.IP    `hunk:"remote_addr"`
-		RemoteIPRaw                string    `hunk:"remote_addr_raw"`
-		GeoIPCountryCode           string    `hunk:"geoip_country_code"`
-		GeoIPCity                  string    `hunk:"geoip_city"`
-		GcdnTimetamp               time.Time `hunk:"time_local"`
-		GcdnResponderName          string    `hunk:"responder_name"`
-		GcdnAPIClientID            uint64    `hunk:"gcdn_api_client_id"`
-		GcdnResourceID             int64     `hunk:"gcdn_api_resource_id"`
-		RQHeaderHost               string    `hunk:"host"`
-		RQHeaderUserAgent          string    `hunk:"http_user_agent"`
-		RQLength                   int64     `hunk:"request_length"`
-		Size                       uint64    `hunk:"body_bytes_sent"`
-		HTTPRequestRaw             string    `hunk:"request"`
-		HTTPStatus                 int       `hunk:"status"`
-		HTTPReferer                string    `hunk:"http_referer"`
-		HTTPScheme                 string    `hunk:"scheme"`
-		HTTPRangeRaw               string    `hunk:"http_range"`
-		ServerToClientBytesSent    uint64    `hunk:"bytes_sent"`
-		ServerToClientBytesSentRaw string    `hunk:"bytes_sent_raw"`
-		SentHTTPContentSize        uint64    `hunk:"sent_http_content_size"`
-		SentHTTPContentSizeRaw     string    `hunk:"sent_http_content_size_raw"`
-		UpstreamResponseTimeRaw    string    `hunk:"upstream_response_time"`
-		UpstreamResponseLengthRaw  string    `hunk:"upstream_response_length"`
-		CacheStatus                string    `hunk:"upstream_cache_status"`
-		ProcessingTime             float64   `hunk:"request_time"`
-		UpstreamIPRaw              string    `hunk:"upstream_addr"`
-		UIDCookieGot               string    `hunk:"uid_got"`
-		UIDCookieSet               string    `hunk:"uid_set"`
-		ShieldUsedRaw              string    `hunk:"shield_type"`
-	}
-	// define format string
-	f := `:remote_addr - :remote_user :time_local :request :status ` +
-		`:body_bytes_sent :http_referer :http_user_agent :bytes_sent :sent_http_content_size ` +
-		`:scheme :host :request_time :upstream_response_time :request_length :http_range ` +
-		`:responder_name :upstream_cache_status :upstream_response_length :upstream_addr ` +
-		`:gcdn_api_client_id :gcdn_api_resource_id :uid_got :uid_set :geoip_country_code ` +
-		`:geoip_city :shield_type`
+// define your structure with needed field. Notice that you can set *_raw fields, which will be
+// filled by raw value
+var s struct {
+	ParsedAtTimestamp          time.Time `hunk:"date"`
+	RemoteUser                 string    `hunk:"remote_user"`
+	RemoteIP                   net.IP    `hunk:"remote_addr"`
+	RemoteIPRaw                string    `hunk:"remote_addr_raw"`
+	GeoIPCountryCode           string    `hunk:"geoip_country_code"`
+	GeoIPCity                  string    `hunk:"geoip_city"`
+	GcdnTimetamp               time.Time `hunk:"time_local"`
+	GcdnResponderName          string    `hunk:"responder_name"`
+	GcdnAPIClientID            uint64    `hunk:"gcdn_api_client_id"`
+	GcdnResourceID             int64     `hunk:"gcdn_api_resource_id"`
+	RQHeaderHost               string    `hunk:"host"`
+	RQHeaderUserAgent          string    `hunk:"http_user_agent"`
+	RQLength                   int64     `hunk:"request_length"`
+	Size                       uint64    `hunk:"body_bytes_sent"`
+	HTTPRequestRaw             string    `hunk:"request"`
+	HTTPStatus                 int       `hunk:"status"`
+	HTTPReferer                string    `hunk:"http_referer"`
+	HTTPScheme                 string    `hunk:"scheme"`
+	HTTPRangeRaw               string    `hunk:"http_range"`
+	ServerToClientBytesSent    uint64    `hunk:"bytes_sent"`
+	ServerToClientBytesSentRaw string    `hunk:"bytes_sent_raw"`
+	SentHTTPContentSize        uint64    `hunk:"sent_http_content_size"`
+	SentHTTPContentSizeRaw     string    `hunk:"sent_http_content_size_raw"`
+	UpstreamResponseTimeRaw    string    `hunk:"upstream_response_time"`
+	UpstreamResponseLengthRaw  string    `hunk:"upstream_response_length"`
+	CacheStatus                string    `hunk:"upstream_cache_status"`
+	ProcessingTime             float64   `hunk:"request_time"`
+	UpstreamIPRaw              string    `hunk:"upstream_addr"`
+	UIDCookieGot               string    `hunk:"uid_got"`
+	UIDCookieSet               string    `hunk:"uid_set"`
+	ShieldUsedRaw              string    `hunk:"shield_type"`
+}
+// define format string
+f := `:remote_addr - :remote_user :time_local :request :status ` +
+	`:body_bytes_sent :http_referer :http_user_agent :bytes_sent :sent_http_content_size ` +
+	`:scheme :host :request_time :upstream_response_time :request_length :http_range ` +
+	`:responder_name :upstream_cache_status :upstream_response_length :upstream_addr ` +
+	`:gcdn_api_client_id :gcdn_api_resource_id :uid_got :uid_set :geoip_country_code ` +
+	`:geoip_city :shield_type`
 
-	// log line
-	l := `"62.149.10.131" "-" "-" "[04/Jan/2018:19:15:39 +0000]" "GET /dino.jpg HTTP/1.1" "200" "207402" "" "saelmon" "207957" "-" "https" "di.gcdn.co" "0.000" "-" "88" "-" "[gn]" "HIT" "-" "-" "777" "1337" "-" "-" "UA" "-" "shield_no"`
+// log line
+l := `"62.149.10.131" "-" "-" "[04/Jan/2018:19:15:39 +0000]" "GET /dino.jpg HTTP/1.1" "200" "207402" "" "saelmon" "207957" "-" "https" "di.gcdn.co" "0.000" "-" "88" "-" "[gn]" "HIT" "-" "-" "777" "1337" "-" "-" "UA" "-" "shield_no"`
 
-	// initialize parser
-	p, err := NewParser(f, &s)
-	if err != nil {
-		fmt.Println(err)
-	}
+// initialize parser
+p, err := NewParser(f, &s)
+if err != nil {
+	fmt.Println(err)
+}
 
-	// set time parsing format for time_local field and say that all tokens separated by '"'
-	p.SetTokenSeparator('"')
-	p.SetTimeLayout("time_local", "[02/Jan/2006:15:04:05 -0700]")
+// set time parsing format for time_local field and say that all tokens separated by '"'
+p.SetTokenSeparator('"')
+p.SetTimeLayout("time_local", "[02/Jan/2006:15:04:05 -0700]")
 
-	// parse line into s
-	if err = p.ParseLine(l, &s); err != nil {
-		fmt.Println(err)
-	}
-	fmt.Printf("%+v\n", s)
+// parse line into s
+if err = p.ParseLine(l, &s); err != nil {
+	fmt.Println(err)
+}
+fmt.Printf("%#v\n", s)
 ```
 
 Note that all concurrency dispatch is lying on your shoulders.
