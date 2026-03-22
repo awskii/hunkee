@@ -133,20 +133,21 @@ func parseFloat(kind reflect.Kind, token string) (float64, error) {
 func parseStringToStruct(v reflect.Value, token string, field *field) (err error) {
 	switch field.ftype {
 	case typeTime:
-		var t time.Time
 		if field.timeOptions == nil {
 			return ErrNilTimeOptions
 		}
 
+		// Write directly to the struct field via pointer to avoid
+		// reflect.ValueOf(t) which heap-allocates a copy of time.Time (24 bytes).
+		tp := v.Addr().Interface().(*time.Time)
 		if field.timeOptions.Location == nil {
-			t, err = time.Parse(field.timeOptions.Layout, token)
+			*tp, err = time.Parse(field.timeOptions.Layout, token)
 		} else {
-			t, err = time.ParseInLocation(field.timeOptions.Layout, token, field.timeOptions.Location)
+			*tp, err = time.ParseInLocation(field.timeOptions.Layout, token, field.timeOptions.Location)
 		}
 		if err != nil {
 			return err
 		}
-		v.Set(reflect.ValueOf(t))
 	case typeURL:
 		u, err := url.Parse(token)
 		if err != nil {
