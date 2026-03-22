@@ -44,6 +44,10 @@ func (p *Parser) parseLine(line string, dest interface{}) (err error) {
 	for field := w.first(); field != nil; field = w.next() {
 		var token string
 
+		if offset < 0 {
+			return errors.New("provided line has less tokens than expected")
+		}
+
 		start := offset
 		// if token separator is 0, no need to search first occurrence
 		if p.mapper.tokenSep != 0 {
